@@ -3,39 +3,172 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Textured and Lit Cube Playground</title>
+  <title>Textured and Lit Object Playground</title>
   <link rel="stylesheet" href="./style.css" />
 </head>
 <body>
-  <main class="app">
-    <header>
-      <h1>Textured and Lit Cube Playground</h1>
-      <p>WebGL — Lighting, Shading & Texture</p>
-    </header>
 
-    <canvas id="glCanvas" width="960" height="600"></canvas>
+  <div class="app">
 
-    <section id="hud">
-      <div>Shading: <span id="shadingInfo"></span></div>
-      <div>Filtering: <span id="filterInfo"></span></div>
-      <div>Wrapping: <span id="wrapInfo"></span></div>
-      <div>UV Scale: <span id="uvInfo"></span></div>
-      <div>Shininess: <span id="shininessInfo"></span></div>
-      <div>Light: <span id="lightInfo"></span></div>
-    </section>
+    <!-- AREA KIRI: CANVAS & HUD -->
+    <div class="left-panel">
+      <div class="header">
+        <h1>Textured and Lit Object Playground</h1>
+        <p>PRAKTIKUM 05 - LIGHTING, SHADING & TEXTURE</p>
+      </div>
 
-    <section class="controls">
-      <strong>Kontrol:</strong>
-      <span>Arrow = Light X/Y</span>
-      <span>W/S = Light Z</span>
-      <span>F = Flat/Smooth</span>
-      <span>T = Filtering</span>
-      <span>G = Wrapping</span>
-      <span>[ / ] = UV Scale</span>
-      <span>- / + = Shininess</span>
-      <span>R = Reset</span>
-    </section>
-  </main>
+      <div class="canvas-wrapper">
+        <canvas id="glCanvas" width="800" height="600"></canvas>
+        <div class="status-badge" id="statusBadge">RUNNING - LIGHTING ON</div>
+      </div>
+
+      <div class="hud-bottom">
+        <div class="hud-item">
+          <span class="hud-label">Shading</span>
+          <span class="hud-value" id="hudShading">FLAT</span>
+        </div>
+        <div class="hud-item">
+          <span class="hud-label">Filtering</span>
+          <span class="hud-value" id="hudFiltering">LINEAR</span>
+        </div>
+        <div class="hud-item">
+          <span class="hud-label">Light</span>
+          <span class="hud-value" id="hudLight">(2.00, 2.00, 2.00)</span>
+        </div>
+        <div class="hud-item">
+          <span class="hud-label">Wrapping</span>
+          <span class="hud-value" id="hudWrapping">REPEAT</span>
+        </div>
+        <div class="hud-item">
+          <span class="hud-label">Texture</span>
+          <span class="hud-value" id="hudTexture">CHECKER</span>
+        </div>
+        <div class="hud-item">
+          <span class="hud-label">Camera</span>
+          <span class="hud-value" id="hudCamera">ORBIT OFF</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- AREA KANAN: PANEL KONTROL -->
+    <div class="right-panel">
+      <div class="panel-header">PARAMETER CONTROL</div>
+
+      <div class="control-group">
+        <label>Bentuk objek</label>
+        <select id="shapeSelect">
+          <option value="cube">Kubus</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label>Ambient Strength</label>
+        <div class="slider-row">
+          <input type="range" id="ambientSlider" min="0" max="1" step="0.01" value="0.18">
+          <span class="slider-val" id="ambientVal">0.18</span>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <label>Shininess</label>
+        <div class="slider-row">
+          <input type="range" id="shininessSlider" min="2" max="128" step="1" value="32">
+          <span class="slider-val" id="shininessVal">32</span>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <label>LIGHT POSITION</label>
+        <div class="axis-row">
+          <span>X</span>
+          <input type="range" id="lightX" min="-5" max="5" step="0.1" value="2">
+          <span class="slider-val" id="lightXVal">2.0</span>
+        </div>
+        <div class="axis-row">
+          <span>Y</span>
+          <input type="range" id="lightY" min="-5" max="5" step="0.1" value="2">
+          <span class="slider-val" id="lightYVal">2.0</span>
+        </div>
+        <div class="axis-row">
+          <span>Z</span>
+          <input type="range" id="lightZ" min="-5" max="5" step="0.1" value="2">
+          <span class="slider-val" id="lightZVal">2.0</span>
+        </div>
+      </div>
+
+      <div class="button-grid">
+        <button id="btnFlatSmooth">Flat / Smooth (F)</button>
+        <button id="btnTexture">Texture (T)</button>
+        <button id="btnLightOrbit">Light Orbit (L)</button>
+        <button id="btnCameraOrbit">Camera Orbit</button>
+      </div>
+
+      <button class="btn-primary" id="btnStopRotation">Stop Object Rotation (P)</button>
+
+      <div class="control-group">
+        <label>Texture Source</label>
+        <select id="textureSelect">
+          <option value="checkerboard">Checkerboard</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label>Filtering</label>
+        <select id="filterSelect">
+          <option value="LINEAR">LINEAR</option>
+          <option value="NEAREST">NEAREST</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label>Wrapping</label>
+        <select id="wrapSelect">
+          <option value="REPEAT">REPEAT</option>
+          <option value="CLAMP_TO_EDGE">CLAMP_TO_EDGE</option>
+          <option value="MIRRORED_REPEAT">MIRRORED_REPEAT</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label>LIGHTING COMPONENTS</label>
+        <div class="checkbox-group">
+          <label><input type="checkbox" id="chkAmbient" checked> Ambient</label>
+          <label><input type="checkbox" id="chkDiffuse" checked> Diffuse</label>
+          <label><input type="checkbox" id="chkSpecular" checked> Specular</label>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <label>NON-UNIFORM SCALE</label>
+        <div class="axis-row">
+          <span>X</span>
+          <input type="range" id="scaleX" min="0.2" max="2.0" step="0.1" value="1.0">
+          <span class="slider-val" id="scaleXVal">1.0</span>
+        </div>
+        <div class="axis-row">
+          <span>Y</span>
+          <input type="range" id="scaleY" min="0.2" max="2.0" step="0.1" value="1.0">
+          <span class="slider-val" id="scaleYVal">1.0</span>
+        </div>
+        <div class="axis-row">
+          <span>Z</span>
+          <input type="range" id="scaleZ" min="0.2" max="2.0" step="0.1" value="1.0">
+          <span class="slider-val" id="scaleZVal">1.0</span>
+        </div>
+      </div>
+
+      <button class="btn-danger" id="btnReset">Reset Scene (R)</button>
+
+      <div class="keyboard-legend">
+        <strong>Keyboard</strong>
+        <p>Arrow: Light X/Y &nbsp; W/S: Light Z</p>
+        <p>Q/E: Camera X &nbsp; F: Flat/Smooth</p>
+        <p>T: Texture &nbsp; L: Light Orbit &nbsp; R: Reset</p>
+        <p>P: stop/resume object rotation</p>
+      </div>
+    </div>
+
+  </div>
 
   <script type="module" src="./main.js"></script>
 </body>
