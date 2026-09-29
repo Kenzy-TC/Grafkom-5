@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Textured and Lit Cube Playground</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <main class="app">
+    <header>
+      <h1>Textured and Lit Cube Playground</h1>
+      <p>WebGL — Lighting, Shading & Texture</p>
+    </header>
+
+    <canvas id="glCanvas" width="960" height="600"></canvas>
+
+    <section id="hud">
+      <div>Shading: <span id="shadingInfo"></span></div>
+      <div>Filtering: <span id="filterInfo"></span></div>
+      <div>Wrapping: <span id="wrapInfo"></span></div>
+      <div>UV Scale: <span id="uvInfo"></span></div>
+      <div>Shininess: <span id="shininessInfo"></span></div>
+      <div>Light: <span id="lightInfo"></span></div>
+    </section>
+
+    <section class="controls">
+      <strong>Kontrol:</strong>
+      <span>Arrow = Light X/Y</span>
+      <span>W/S = Light Z</span>
+      <span>F = Flat/Smooth</span>
+      <span>T = Filtering</span>
+      <span>G = Wrapping</span>
+      <span>[ / ] = UV Scale</span>
+      <span>- / + = Shininess</span>
+      <span>R = Reset</span>
+    </section>
+  </main>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>
