@@ -1,56 +1,160 @@
 import { Mat4, normalMatrixFromMat4, degToRad } from "./math3d.js";
 
-// --- 1. SETUP WEBGL ---
+// ==================== 1. SETUP WEBGL ====================
 const canvas = document.getElementById("glCanvas");
 const gl = canvas.getContext("webgl2");
 if (!gl) throw new Error("WebGL2 tidak tersedia.");
 gl.enable(gl.DEPTH_TEST);
 
-// --- 2. GEOMETRY DATA ---
-const positions = new Float32Array([
-  -0.5,-0.5, 0.5,  0.5,-0.5, 0.5,  0.5, 0.5, 0.5,
-  -0.5,-0.5, 0.5,  0.5, 0.5, 0.5, -0.5, 0.5, 0.5,
-   0.5,-0.5,-0.5, -0.5,-0.5,-0.5, -0.5, 0.5,-0.5,
-   0.5,-0.5,-0.5, -0.5, 0.5,-0.5,  0.5, 0.5,-0.5,
-  -0.5,-0.5,-0.5, -0.5,-0.5, 0.5, -0.5, 0.5, 0.5,
-  -0.5,-0.5,-0.5, -0.5, 0.5, 0.5, -0.5, 0.5,-0.5,
-   0.5,-0.5, 0.5,  0.5,-0.5,-0.5,  0.5, 0.5,-0.5,
-   0.5,-0.5, 0.5,  0.5, 0.5,-0.5,  0.5, 0.5, 0.5,
-  -0.5, 0.5, 0.5,  0.5, 0.5, 0.5,  0.5, 0.5,-0.5,
-  -0.5, 0.5, 0.5,  0.5, 0.5,-0.5, -0.5, 0.5,-0.5,
-  -0.5,-0.5,-0.5,  0.5,-0.5,-0.5,  0.5,-0.5, 0.5,
-  -0.5,-0.5,-0.5,  0.5,-0.5, 0.5, -0.5,-0.5, 0.5,
-]);
-
-const flatNormals = new Float32Array([
-  0,0,1, 0,0,1, 0,0,1, 0,0,1, 0,0,1, 0,0,1,
-  0,0,-1, 0,0,-1, 0,0,-1, 0,0,-1, 0,0,-1, 0,0,-1,
-  -1,0,0, -1,0,0, -1,0,0, -1,0,0, -1,0,0, -1,0,0,
-  1,0,0, 1,0,0, 1,0,0, 1,0,0, 1,0,0, 1,0,0,
-  0,1,0, 0,1,0, 0,1,0, 0,1,0, 0,1,0, 0,1,0,
-  0,-1,0, 0,-1,0, 0,-1,0, 0,-1,0, 0,-1,0, 0,-1,0,
-]);
-
-function createSmoothNormals(pos) {
-  const n = new Float32Array(pos.length);
-  for (let i = 0; i < pos.length; i += 3) {
-    const x = pos[i], y = pos[i+1], z = pos[i+2];
+// ==================== 2. GEOMETRY GENERATORS ====================
+function createCube() {
+  const p = new Float32Array([
+    -0.5,-0.5, 0.5,  0.5,-0.5, 0.5,  0.5, 0.5, 0.5,
+    -0.5,-0.5, 0.5,  0.5, 0.5, 0.5, -0.5, 0.5, 0.5,
+     0.5,-0.5,-0.5, -0.5,-0.5,-0.5, -0.5, 0.5,-0.5,
+     0.5,-0.5,-0.5, -0.5, 0.5,-0.5,  0.5, 0.5,-0.5,
+    -0.5,-0.5,-0.5, -0.5,-0.5, 0.5, -0.5, 0.5, 0.5,
+    -0.5,-0.5,-0.5, -0.5, 0.5, 0.5, -0.5, 0.5,-0.5,
+     0.5,-0.5, 0.5,  0.5,-0.5,-0.5,  0.5, 0.5,-0.5,
+     0.5,-0.5, 0.5,  0.5, 0.5,-0.5,  0.5, 0.5, 0.5,
+    -0.5, 0.5, 0.5,  0.5, 0.5, 0.5,  0.5, 0.5,-0.5,
+    -0.5, 0.5, 0.5,  0.5, 0.5,-0.5, -0.5, 0.5,-0.5,
+    -0.5,-0.5,-0.5,  0.5,-0.5,-0.5,  0.5,-0.5, 0.5,
+    -0.5,-0.5,-0.5,  0.5,-0.5, 0.5, -0.5,-0.5, 0.5,
+  ]);
+  const n = new Float32Array(p.length);
+  for (let i = 0; i < p.length; i += 3) {
+    const x = p[i], y = p[i+1], z = p[i+2];
     const len = Math.hypot(x, y, z);
     n[i] = x/len; n[i+1] = y/len; n[i+2] = z/len;
   }
-  return n;
-}
-const smoothNormals = createSmoothNormals(positions);
-
-function createCubeUVs() {
   const faceUV = [0,0, 1,0, 1,1, 0,0, 1,1, 0,1];
   const uv = [];
   for (let i = 0; i < 6; i++) uv.push(...faceUV);
-  return new Float32Array(uv);
+  return { positions: p, normals: n, uvs: new Float32Array(uv), vertexCount: 36 };
 }
-const texCoords = createCubeUVs();
 
-// --- 3. SHADERS ---
+function createSphere(radius = 0.75, latBands = 32, longBands = 32) {
+  const positions = [], normals = [], uvs = [];
+  for (let lat = 0; lat <= latBands; lat++) {
+    const theta = (lat * Math.PI) / latBands;
+    const sinTheta = Math.sin(theta), cosTheta = Math.cos(theta);
+    for (let lon = 0; lon <= longBands; lon++) {
+      const phi = (lon * 2 * Math.PI) / longBands;
+      const sinPhi = Math.sin(phi), cosPhi = Math.cos(phi);
+      const x = cosPhi * sinTheta, y = cosTheta, z = sinPhi * sinTheta;
+      positions.push(radius * x, radius * y, radius * z);
+      normals.push(x, y, z);
+      uvs.push(lon / longBands, lat / latBands);
+    }
+  }
+  const indices = [];
+  for (let lat = 0; lat < latBands; lat++) {
+    for (let lon = 0; lon < longBands; lon++) {
+      const first = lat * (longBands + 1) + lon;
+      const second = first + longBands + 1;
+      indices.push(first, second, first + 1);
+      indices.push(second, second + 1, first + 1);
+    }
+  }
+  return buildGeometry(positions, normals, uvs, indices);
+}
+
+function createTorus(R = 0.6, r = 0.25, majorSeg = 48, minorSeg = 24) {
+  const positions = [], normals = [], uvs = [];
+  for (let i = 0; i <= majorSeg; i++) {
+    const u = (i / majorSeg) * 2 * Math.PI;
+    const cosU = Math.cos(u), sinU = Math.sin(u);
+    for (let j = 0; j <= minorSeg; j++) {
+      const v = (j / minorSeg) * 2 * Math.PI;
+      const cosV = Math.cos(v), sinV = Math.sin(v);
+      positions.push((R + r * cosV) * cosU, (R + r * cosV) * sinU, r * sinV);
+      normals.push(cosV * cosU, cosV * sinU, sinV);
+      uvs.push(i / majorSeg, j / minorSeg);
+    }
+  }
+  const indices = [];
+  for (let i = 0; i < majorSeg; i++) {
+    for (let j = 0; j < minorSeg; j++) {
+      const a = i * (minorSeg + 1) + j;
+      const b = a + minorSeg + 1;
+      indices.push(a, b, a + 1);
+      indices.push(b, b + 1, a + 1);
+    }
+  }
+  return buildGeometry(positions, normals, uvs, indices);
+}
+
+function createTorusKnot(p = 2, q = 3, radius = 0.6, tube = 0.22, tubularSeg = 128, radialSeg = 16) {
+  const positions = [], normals = [], uvs = [];
+  const P = (t) => {
+    const cu = Math.cos(t * p), su = Math.sin(t * p);
+    const quOverP = q / p;
+    const cs = Math.cos(t * quOverP);
+    return [
+      radius * (2 + cs) * 0.5 * cu,
+      radius * (2 + cs) * su * 0.5,
+      radius * Math.sin(t * quOverP) * 0.5
+    ];
+  };
+  for (let i = 0; i <= tubularSeg; i++) {
+    const u = (i / tubularSeg) * 2 * Math.PI * p;
+    const pos = P(u);
+    const eps = 0.001;
+    const pos2 = P(u + eps);
+    const T = [pos2[0]-pos[0], pos2[1]-pos[1], pos2[2]-pos[2]];
+    const lenT = Math.hypot(...T);
+    T[0]/=lenT; T[1]/=lenT; T[2]/=lenT;
+    const N = [T[1], -T[0], 0];
+    const lenN = Math.hypot(...N);
+    N[0]/=lenN; N[1]/=lenN; N[2]/=lenN;
+    const B = [
+      T[1]*N[2] - T[2]*N[1],
+      T[2]*N[0] - T[0]*N[2],
+      T[0]*N[1] - T[1]*N[0]
+    ];
+    for (let j = 0; j <= radialSeg; j++) {
+      const v = (j / radialSeg) * 2 * Math.PI;
+      const cx = -tube * Math.cos(v), cy = tube * Math.sin(v);
+      const x = pos[0] + cx * N[0] + cy * B[0];
+      const y = pos[1] + cx * N[1] + cy * B[1];
+      const z = pos[2] + cx * N[2] + cy * B[2];
+      positions.push(x, y, z);
+      const nx = x - pos[0], ny = y - pos[1], nz = z - pos[2];
+      const len = Math.hypot(nx, ny, nz);
+      normals.push(nx/len, ny/len, nz/len);
+      uvs.push(i / tubularSeg, j / radialSeg);
+    }
+  }
+  const indices = [];
+  for (let i = 0; i < tubularSeg; i++) {
+    for (let j = 0; j < radialSeg; j++) {
+      const a = i * (radialSeg + 1) + j;
+      const b = a + radialSeg + 1;
+      indices.push(a, b, a + 1);
+      indices.push(b, b + 1, a + 1);
+    }
+  }
+  return buildGeometry(positions, normals, uvs, indices);
+}
+
+function buildGeometry(positions, normals, uvs, indices) {
+  const p = [], n = [], uv = [];
+  for (let i = 0; i < indices.length; i++) {
+    const idx = indices[i];
+    p.push(positions[idx*3], positions[idx*3+1], positions[idx*3+2]);
+    n.push(normals[idx*3], normals[idx*3+1], normals[idx*3+2]);
+    uv.push(uvs[idx*2], uvs[idx*2+1]);
+  }
+  return {
+    positions: new Float32Array(p),
+    normals: new Float32Array(n),
+    uvs: new Float32Array(uv),
+    vertexCount: indices.length
+  };
+}
+
+// ==================== 3. SHADERS ====================
 const vsSource = `#version 300 es
 in vec3 a_position;
 in vec3 a_normal;
@@ -75,26 +179,30 @@ in vec2 v_texCoord;
 uniform vec3 u_lightPosition, u_lightColor, u_cameraPosition;
 uniform float u_ambientStrength, u_shininess;
 uniform float u_useAmbient, u_useDiffuse, u_useSpecular;
+uniform float u_flatShading;
 uniform sampler2D u_texture;
 out vec4 outColor;
 void main() {
-  vec3 N = normalize(v_normal);
+  vec3 N;
+  if (u_flatShading > 0.5) {
+    N = normalize(cross(dFdx(v_worldPosition), dFdy(v_worldPosition)));
+  } else {
+    N = normalize(v_normal);
+  }
   vec3 L = normalize(u_lightPosition - v_worldPosition);
   vec3 V = normalize(u_cameraPosition - v_worldPosition);
   float diff = max(dot(N, L), 0.0);
   vec3 R = reflect(-L, N);
   float spec = 0.0;
   if (diff > 0.0) spec = pow(max(dot(R, V), 0.0), u_shininess);
-
   vec3 texColor = texture(u_texture, v_texCoord).rgb;
   vec3 ambient = u_useAmbient * u_ambientStrength * texColor;
   vec3 diffuse = u_useDiffuse * diff * u_lightColor * texColor;
   vec3 specular = u_useSpecular * spec * u_lightColor;
-
   outColor = vec4(ambient + diffuse + specular, 1.0);
 }`;
 
-// --- 4. COMPILE & LINK ---
+// ==================== 4. COMPILE & LINK ====================
 function createShader(gl, type, src) {
   const s = gl.createShader(type);
   gl.shaderSource(s, src); gl.compileShader(s);
@@ -108,7 +216,7 @@ gl.linkProgram(prog);
 if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
 gl.useProgram(prog);
 
-// --- 5. LOCATIONS & BUFFERS ---
+// ==================== 5. LOCATIONS ====================
 const loc = {
   pos: gl.getAttribLocation(prog, "a_position"),
   norm: gl.getAttribLocation(prog, "a_normal"),
@@ -127,18 +235,35 @@ const loc = {
   useAmb: gl.getUniformLocation(prog, "u_useAmbient"),
   useDiff: gl.getUniformLocation(prog, "u_useDiffuse"),
   useSpec: gl.getUniformLocation(prog, "u_useSpecular"),
+  flatShading: gl.getUniformLocation(prog, "u_flatShading"),
 };
 
-function createBuf(data) {
-  const b = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, b);
-  gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
-  return b;
+// ==================== 6. GEOMETRY MANAGEMENT ====================
+let currentGeometry = null;
+let positionBuffer, normalBuffer, uvBuffer;
+
+function updateGeometry(shapeName) {
+  let geo;
+  switch (shapeName) {
+    case "sphere": geo = createSphere(); break;
+    case "torus": geo = createTorus(); break;
+    case "torusKnot": geo = createTorusKnot(); break;
+    default: geo = createCube(); break;
+  }
+  currentGeometry = geo;
+
+  if (!positionBuffer) {
+    positionBuffer = gl.createBuffer();
+    normalBuffer = gl.createBuffer();
+    uvBuffer = gl.createBuffer();
+  }
+  gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, geo.positions, gl.STATIC_DRAW);
+  gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, geo.normals, gl.STATIC_DRAW);
+  gl.bindBuffer(gl.ARRAY_BUFFER, uvBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, geo.uvs, gl.STATIC_DRAW);
 }
-const bufPos = createBuf(positions);
-const bufFlat = createBuf(flatNormals);
-const bufSmooth = createBuf(smoothNormals);
-const bufUV = createBuf(texCoords);
 
 function setupAttr(buf, location, size) {
   gl.bindBuffer(gl.ARRAY_BUFFER, buf);
@@ -146,7 +271,8 @@ function setupAttr(buf, location, size) {
   gl.vertexAttribPointer(location, size, gl.FLOAT, false, 0, 0);
 }
 
-// --- 6. TEXTURE ---
+// ==================== 7. TEXTURES ====================
+// 7a. Checkerboard
 function createCheckerTexture() {
   const size = 64, cells = 8, cellSize = size / cells;
   const src = document.createElement("canvas");
@@ -164,18 +290,78 @@ function createCheckerTexture() {
   gl.generateMipmap(gl.TEXTURE_2D);
   return tex;
 }
-const texture = createCheckerTexture();
+
+// 7b. Image texture — coba load dari ./assets/texture.png,
+//     fallback ke procedural UV-pattern kalau gagal.
+function createImageTexture() {
+  const tex = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, tex);
+
+  // Placeholder 1×1 dulu supaya tidak warning
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE,
+    new Uint8Array([180, 20, 20, 255]));
+
+  const img = new Image();
+  img.crossOrigin = "anonymous";
+  img.onload = () => {
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+    gl.generateMipmap(gl.TEXTURE_2D);
+    applyTextureParams(tex);
+  };
+  img.onerror = () => {
+    console.warn("[Texture] ./assets/texture.png tidak ditemukan → pakai fallback UV pattern.");
+    const canvas = document.createElement("canvas");
+    canvas.width = canvas.height = 256;
+    const ctx = canvas.getContext("2d");
+    // gradient warna-warni biar jelas bedanya dari checkerboard
+    const grad = ctx.createLinearGradient(0, 0, 256, 256);
+    grad.addColorStop(0.00, "#ff0099");
+    grad.addColorStop(0.33, "#ffcc00");
+    grad.addColorStop(0.66, "#00ffcc");
+    grad.addColorStop(1.00, "#0066ff");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 256, 256);
+    // grid
+    ctx.strokeStyle = "rgba(0,0,0,0.5)";
+    ctx.lineWidth = 2;
+    const g = 256 / 8;
+    for (let i = 0; i <= 8; i++) {
+      ctx.beginPath(); ctx.moveTo(i*g, 0); ctx.lineTo(i*g, 256); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0, i*g); ctx.lineTo(256, i*g); ctx.stroke();
+    }
+    // label UV
+    ctx.fillStyle = "#fff";
+    ctx.font = "bold 22px monospace";
+    ctx.fillText("U →", 10, 30);
+    ctx.fillText("V ↓", 10, 250);
+
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, canvas);
+    gl.generateMipmap(gl.TEXTURE_2D);
+    applyTextureParams(tex);
+  };
+  img.src = "./assets/texture.png";
+
+  return tex;
+}
+
+const checkerTexture = createCheckerTexture();
+const imageTexture = createImageTexture();
+
+// State texture unit → selalu di TEXTURE0
 gl.activeTexture(gl.TEXTURE0);
-gl.bindTexture(gl.TEXTURE_2D, texture);
 gl.uniform1i(loc.tex, 0);
 
-// --- 7. STATE ---
+// ==================== 8. STATE ====================
 const state = {
+  shape: "cube",
   rotX: 20, rotY: 30,
   scaleX: 1, scaleY: 1, scaleZ: 1,
   shading: "FLAT",
-  filter: "LINEAR",
-  wrap: "REPEAT",
+  textureSource: "checker",  // "checker" | "image"
+  filter: "LINEAR",          // "LINEAR" | "NEAREST" | "LINEAR_MIPMAP"
+  wrap: "REPEAT",            // "REPEAT" | "CLAMP_TO_EDGE"
   uvScale: 1.0,
   ambient: 0.18,
   shininess: 32.0,
@@ -196,18 +382,56 @@ const camera = {
   orbitAngle: 0,
 };
 
-// --- 8. UI BINDINGS ---
+// ==================== 9. TEXTURE PARAM HELPERS ====================
+function applyTextureParams(tex) {
+  if (!tex) return;
+  gl.bindTexture(gl.TEXTURE_2D, tex);
+
+  // FILTERING
+  if (state.filter === "NEAREST") {
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  } else if (state.filter === "LINEAR_MIPMAP") {
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  } else {
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  }
+
+  // WRAPPING
+  const wMode = state.wrap === "CLAMP_TO_EDGE" ? gl.CLAMP_TO_EDGE : gl.REPEAT;
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wMode);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wMode);
+}
+
+function applyTextureSettings() {
+  applyTextureParams(checkerTexture);
+  applyTextureParams(imageTexture);
+}
+
+function getActiveTexture() {
+  return state.textureSource === "image" ? imageTexture : checkerTexture;
+}
+
+// ==================== 10. UI BINDINGS ====================
 const $ = id => document.getElementById(id);
 
-// Sliders
+$("shapeSelect").addEventListener("change", e => {
+  state.shape = e.target.value;
+  updateGeometry(state.shape);
+});
+
 $("ambientSlider").addEventListener("input", e => {
   state.ambient = parseFloat(e.target.value);
   $("ambientVal").textContent = state.ambient.toFixed(2);
 });
+
 $("shininessSlider").addEventListener("input", e => {
   state.shininess = parseFloat(e.target.value);
   $("shininessVal").textContent = state.shininess.toFixed(0);
 });
+
 ["X", "Y", "Z"].forEach(axis => {
   $(`light${axis}`).addEventListener("input", e => {
     const val = parseFloat(e.target.value);
@@ -215,6 +439,7 @@ $("shininessSlider").addEventListener("input", e => {
     $(`light${axis}Val`).textContent = val.toFixed(1);
   });
 });
+
 ["X", "Y", "Z"].forEach(axis => {
   $(`scale${axis}`).addEventListener("input", e => {
     const val = parseFloat(e.target.value);
@@ -223,45 +448,68 @@ $("shininessSlider").addEventListener("input", e => {
   });
 });
 
-// Dropdowns
+$("textureSelect").addEventListener("change", e => {
+  state.textureSource = e.target.value;
+});
+
 $("filterSelect").addEventListener("change", e => {
   state.filter = e.target.value;
-  applyFiltering();
+  applyTextureSettings();
 });
+
 $("wrapSelect").addEventListener("change", e => {
   state.wrap = e.target.value;
-  applyWrapping();
+  applyTextureSettings();
 });
 
-// Checkboxes
-$("chkAmbient").addEventListener("change", e => state.useAmbient = e.target.checked);
-$("chkDiffuse").addEventListener("change", e => state.useDiffuse = e.target.checked);
+$("chkAmbient").addEventListener("change",  e => state.useAmbient  = e.target.checked);
+$("chkDiffuse").addEventListener("change",  e => state.useDiffuse  = e.target.checked);
 $("chkSpecular").addEventListener("change", e => state.useSpecular = e.target.checked);
 
-// Buttons
+// ---- Toggle Buttons ----
+function setToggle(btnId, isActive) {
+  const btn = $(btnId);
+  if (!btn) return;
+  btn.classList.toggle("active", isActive);
+}
+
 $("btnFlatSmooth").addEventListener("click", () => {
   state.shading = state.shading === "FLAT" ? "SMOOTH" : "FLAT";
+  setToggle("btnFlatSmooth", state.shading === "SMOOTH");
 });
+
 $("btnTexture").addEventListener("click", () => {
-  // Placeholder untuk ganti texture jika ada
+  $("btnTexture").classList.toggle("active");
 });
+
 $("btnLightOrbit").addEventListener("click", () => {
   state.isLightOrbit = !state.isLightOrbit;
+  setToggle("btnLightOrbit", state.isLightOrbit);
 });
+
 $("btnCameraOrbit").addEventListener("click", () => {
   state.isCameraOrbit = !state.isCameraOrbit;
+  setToggle("btnCameraOrbit", state.isCameraOrbit);
 });
+
 $("btnStopRotation").addEventListener("click", () => {
   state.isRotating = !state.isRotating;
-  $("btnStopRotation").textContent = state.isRotating ? "Stop Object Rotation (P)" : "Start Object Rotation (P)";
+  updateRotationButton();
 });
+
 $("btnReset").addEventListener("click", resetScene);
 
-// Keyboard
+function updateRotationButton() {
+  const btn = $("btnStopRotation");
+  btn.querySelector(".btn-label").textContent =
+    state.isRotating ? "Stop Object Rotation (P)" : "Start Object Rotation (P)";
+  setToggle("btnStopRotation", state.isRotating);
+}
+
+// ==================== 11. KEYBOARD ====================
 const keys = {};
 window.addEventListener("keydown", e => {
-  const k = e.key.toLowerCase();
-  keys[k] = true;
+  keys[e.key.toLowerCase()] = true;
   if (e.key.startsWith("Arrow")) e.preventDefault();
 });
 window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
@@ -269,38 +517,31 @@ window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
 window.addEventListener("keydown", e => {
   const k = e.key.toLowerCase();
   if (e.repeat) return;
-  if (k === "f") state.shading = state.shading === "FLAT" ? "SMOOTH" : "FLAT";
-  if (k === "t") state.filter = state.filter === "LINEAR" ? "NEAREST" : "LINEAR";
+  if (k === "f") {
+    state.shading = state.shading === "FLAT" ? "SMOOTH" : "FLAT";
+    setToggle("btnFlatSmooth", state.shading === "SMOOTH");
+  }
+  if (k === "t") {
+    $("btnTexture").classList.toggle("active");
+  }
   if (k === "g") {
-    const modes = ["REPEAT", "CLAMP_TO_EDGE", "MIRRORED_REPEAT"];
-    state.wrap = modes[(modes.indexOf(state.wrap) + 1) % modes.length];
+    // hanya 2 mode wrapping
+    state.wrap = state.wrap === "REPEAT" ? "CLAMP_TO_EDGE" : "REPEAT";
+    $("wrapSelect").value = state.wrap;
+    applyTextureSettings();
   }
   if (k === "r") resetScene();
-  if (k === "l") state.isLightOrbit = !state.isLightOrbit;
+  if (k === "l") {
+    state.isLightOrbit = !state.isLightOrbit;
+    setToggle("btnLightOrbit", state.isLightOrbit);
+  }
   if (k === "p") {
     state.isRotating = !state.isRotating;
-    $("btnStopRotation").textContent = state.isRotating ? "Stop Object Rotation (P)" : "Start Object Rotation (P)";
+    updateRotationButton();
   }
 });
 
-// --- 9. TEXTURE PARAMETERS ---
-function applyFiltering() {
-  gl.bindTexture(gl.TEXTURE_2D, texture);
-  const mode = state.filter === "NEAREST" ? gl.NEAREST : gl.LINEAR;
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, mode);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, mode);
-}
-
-function applyWrapping() {
-  gl.bindTexture(gl.TEXTURE_2D, texture);
-  let mode = gl.REPEAT;
-  if (state.wrap === "CLAMP_TO_EDGE") mode = gl.CLAMP_TO_EDGE;
-  if (state.wrap === "MIRRORED_REPEAT") mode = gl.MIRRORED_REPEAT;
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, mode);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, mode);
-}
-
-// --- 10. UPDATE LOGIC ---
+// ==================== 12. RESET ====================
 function resetScene() {
   state.lightPos = [2, 2, 2];
   state.shininess = 32.0;
@@ -308,10 +549,13 @@ function resetScene() {
   state.shading = "FLAT";
   state.filter = "LINEAR";
   state.wrap = "REPEAT";
+  state.textureSource = "checker";
   state.scaleX = 1.0; state.scaleY = 1.0; state.scaleZ = 1.0;
-  state.useAmbient = true; state.useDiffuse = true; state.useSpecular = true;
+  state.useAmbient = state.useDiffuse = state.useSpecular = true;
   state.isRotating = true;
-  
+  state.isLightOrbit = false;
+  state.isCameraOrbit = false;
+
   $("lightX").value = 2; $("lightXVal").textContent = "2.0";
   $("lightY").value = 2; $("lightYVal").textContent = "2.0";
   $("lightZ").value = 2; $("lightZVal").textContent = "2.0";
@@ -325,19 +569,27 @@ function resetScene() {
   $("chkSpecular").checked = true;
   $("filterSelect").value = "LINEAR";
   $("wrapSelect").value = "REPEAT";
-  $("btnStopRotation").textContent = "Stop Object Rotation (P)";
+  $("textureSelect").value = "checker";
+  $("shapeSelect").value = "cube";
+  state.shape = "cube";
+  updateGeometry("cube");
 
-  applyFiltering();
-  applyWrapping();
+  setToggle("btnFlatSmooth", false);
+  setToggle("btnTexture", false);
+  setToggle("btnLightOrbit", false);
+  setToggle("btnCameraOrbit", false);
+  updateRotationButton();
+
+  applyTextureSettings();
 }
 
+// ==================== 13. UPDATE ====================
 function update(dt) {
   if (state.isRotating) {
     state.rotX += 20.0 * dt;
     state.rotY += 35.0 * dt;
   }
 
-  // Light Orbit
   if (state.isLightOrbit) {
     const t = performance.now() * 0.001;
     state.lightPos[0] = Math.cos(t) * 3.0;
@@ -348,14 +600,12 @@ function update(dt) {
     $("lightZVal").textContent = state.lightPos[2].toFixed(1);
   }
 
-  // Camera Orbit
   if (state.isCameraOrbit) {
     camera.orbitAngle += 0.5 * dt;
     camera.pos[0] = Math.cos(camera.orbitAngle) * 4.0;
     camera.pos[2] = Math.sin(camera.orbitAngle) * 4.0;
   }
 
-  // Keyboard Light Control (Manual override)
   const speed = 2.0;
   if (!state.isLightOrbit) {
     if (keys["arrowleft"])  { state.lightPos[0] -= speed * dt; $("lightX").value = state.lightPos[0]; $("lightXVal").textContent = state.lightPos[0].toFixed(1); }
@@ -366,25 +616,25 @@ function update(dt) {
     if (keys["s"])          { state.lightPos[2] += speed * dt; $("lightZ").value = state.lightPos[2]; $("lightZVal").textContent = state.lightPos[2].toFixed(1); }
   }
 
-  // UV Scale (Keyboard only)
   if (keys["["]) state.uvScale = Math.max(0.25, state.uvScale - 1.5 * dt);
   if (keys["]"]) state.uvScale = Math.min(5.0, state.uvScale + 1.5 * dt);
 
-  // Shininess (Keyboard only)
   if (keys["-"] || keys["_"]) state.shininess = Math.max(2, state.shininess - 50 * dt);
   if (keys["+"] || keys["="]) state.shininess = Math.min(128, state.shininess + 50 * dt);
 }
 
-// --- 11. DRAW ---
+// ==================== 14. DRAW ====================
 function draw() {
   gl.viewport(0, 0, canvas.width, canvas.height);
-  gl.clearColor(0.025, 0.04, 0.08, 1.0);
+  gl.clearColor(0, 0, 0, 1.0);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   gl.useProgram(prog);
 
-  setupAttr(bufPos, loc.pos, 3);
-  setupAttr(bufUV, loc.uv, 2);
-  setupAttr(state.shading === "FLAT" ? bufFlat : bufSmooth, loc.norm, 3);
+  if (!currentGeometry) updateGeometry(state.shape);
+
+  setupAttr(positionBuffer, loc.pos, 3);
+  setupAttr(uvBuffer, loc.uv, 2);
+  setupAttr(normalBuffer, loc.norm, 3);
 
   const rx = Mat4.rotationX(degToRad(state.rotX));
   const ry = Mat4.rotationY(degToRad(state.rotY));
@@ -411,35 +661,35 @@ function draw() {
   gl.uniform1f(loc.useAmb, state.useAmbient ? 1.0 : 0.0);
   gl.uniform1f(loc.useDiff, state.useDiffuse ? 1.0 : 0.0);
   gl.uniform1f(loc.useSpec, state.useSpecular ? 1.0 : 0.0);
+  gl.uniform1f(loc.flatShading, state.shading === "FLAT" ? 1.0 : 0.0);
 
   gl.activeTexture(gl.TEXTURE0);
-  gl.bindTexture(gl.TEXTURE_2D, texture);
+  gl.bindTexture(gl.TEXTURE_2D, getActiveTexture());
   gl.uniform1i(loc.tex, 0);
 
-  gl.drawArrays(gl.TRIANGLES, 0, 36);
+  gl.drawArrays(gl.TRIANGLES, 0, currentGeometry.vertexCount);
 }
 
-// --- 12. HUD UPDATE ---
+// ==================== 15. HUD ====================
 function updateHUD() {
-  $("hudShading").textContent = state.shading;
+  $("hudShading").textContent   = state.shading;
   $("hudFiltering").textContent = state.filter;
-  $("hudWrapping").textContent = state.wrap;
-  $("hudLight").textContent = `(${state.lightPos[0].toFixed(2)}, ${state.lightPos[1].toFixed(2)}, ${state.lightPos[2].toFixed(2)})`;
-  $("hudTexture").textContent = "CHECKER";
-  $("hudCamera").textContent = state.isCameraOrbit ? "ORBIT ON" : "ORBIT OFF";
-  
-  // Update badge
+  $("hudWrapping").textContent  = state.wrap;
+  $("hudLight").textContent     = `(${state.lightPos[0].toFixed(2)}, ${state.lightPos[1].toFixed(2)}, ${state.lightPos[2].toFixed(2)})`;
+  $("hudTexture").textContent   = state.textureSource === "image" ? "IMAGE" : "CHECKER";
+  $("hudCamera").textContent    = state.isCameraOrbit ? "ORBIT ON" : "ORBIT OFF";
+
   const badge = $("statusBadge");
   if (state.isRotating || state.isLightOrbit || state.isCameraOrbit) {
-    badge.textContent = "RUNNING - LIGHTING ON";
+    badge.textContent = "● RUNNING";
     badge.style.opacity = "1";
   } else {
-    badge.textContent = "PAUSED";
+    badge.textContent = "● PAUSED";
     badge.style.opacity = "0.6";
   }
 }
 
-// --- 13. MAIN LOOP ---
+// ==================== 16. MAIN LOOP ====================
 let lastTime = 0;
 function render(time) {
   let dt = (time - lastTime) * 0.001;
@@ -453,7 +703,8 @@ function render(time) {
   requestAnimationFrame(render);
 }
 
-// --- 14. INIT ---
-applyFiltering();
-applyWrapping();
+// ==================== 17. INIT ====================
+updateGeometry("cube");
+applyTextureSettings();
+updateRotationButton();
 requestAnimationFrame(render);

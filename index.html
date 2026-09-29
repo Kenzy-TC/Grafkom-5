@@ -3,61 +3,46 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Textured and Lit Object Playground</title>
+  <title>Neon Object Playground — Lighting, Shading & Texture</title>
   <link rel="stylesheet" href="./style.css" />
 </head>
 <body>
 
   <div class="app">
 
-    <!-- AREA KIRI: CANVAS & HUD -->
+    <!-- ============ LEFT: CANVAS + HUD ============ -->
     <div class="left-panel">
       <div class="header">
-        <h1>Textured and Lit Object Playground</h1>
-        <p>PRAKTIKUM 05 - LIGHTING, SHADING & TEXTURE</p>
+        <h1><span class="neon-text">◈</span> TEXTURED & LIT OBJECT PLAYGROUND</h1>
+        <p>PRAKTIKUM 05 // LIGHTING · SHADING · TEXTURE</p>
       </div>
 
       <div class="canvas-wrapper">
         <canvas id="glCanvas" width="800" height="600"></canvas>
-        <div class="status-badge" id="statusBadge">RUNNING - LIGHTING ON</div>
+        <div class="status-badge" id="statusBadge">● RUNNING</div>
       </div>
 
       <div class="hud-bottom">
-        <div class="hud-item">
-          <span class="hud-label">Shading</span>
-          <span class="hud-value" id="hudShading">FLAT</span>
-        </div>
-        <div class="hud-item">
-          <span class="hud-label">Filtering</span>
-          <span class="hud-value" id="hudFiltering">LINEAR</span>
-        </div>
-        <div class="hud-item">
-          <span class="hud-label">Light</span>
-          <span class="hud-value" id="hudLight">(2.00, 2.00, 2.00)</span>
-        </div>
-        <div class="hud-item">
-          <span class="hud-label">Wrapping</span>
-          <span class="hud-value" id="hudWrapping">REPEAT</span>
-        </div>
-        <div class="hud-item">
-          <span class="hud-label">Texture</span>
-          <span class="hud-value" id="hudTexture">CHECKER</span>
-        </div>
-        <div class="hud-item">
-          <span class="hud-label">Camera</span>
-          <span class="hud-value" id="hudCamera">ORBIT OFF</span>
-        </div>
+        <div class="hud-item"><span class="hud-label">Shading</span><span class="hud-value" id="hudShading">FLAT</span></div>
+        <div class="hud-item"><span class="hud-label">Filtering</span><span class="hud-value" id="hudFiltering">LINEAR</span></div>
+        <div class="hud-item"><span class="hud-label">Light</span><span class="hud-value" id="hudLight">(2.00, 2.00, 2.00)</span></div>
+        <div class="hud-item"><span class="hud-label">Wrapping</span><span class="hud-value" id="hudWrapping">REPEAT</span></div>
+        <div class="hud-item"><span class="hud-label">Texture</span><span class="hud-value" id="hudTexture">CHECKER</span></div>
+        <div class="hud-item"><span class="hud-label">Camera</span><span class="hud-value" id="hudCamera">ORBIT OFF</span></div>
       </div>
     </div>
 
-    <!-- AREA KANAN: PANEL KONTROL -->
+    <!-- ============ RIGHT: CONTROL PANEL ============ -->
     <div class="right-panel">
-      <div class="panel-header">PARAMETER CONTROL</div>
+      <div class="panel-header">◢ PARAMETER CONTROL</div>
 
       <div class="control-group">
-        <label>Bentuk objek</label>
+        <label>Bentuk Objek</label>
         <select id="shapeSelect">
           <option value="cube">Kubus</option>
+          <option value="sphere">Bola</option>
+          <option value="torus">Torus</option>
+          <option value="torusKnot">Torus Knot</option>
         </select>
       </div>
 
@@ -79,36 +64,27 @@
 
       <div class="control-group">
         <label>LIGHT POSITION</label>
-        <div class="axis-row">
-          <span>X</span>
-          <input type="range" id="lightX" min="-5" max="5" step="0.1" value="2">
-          <span class="slider-val" id="lightXVal">2.0</span>
-        </div>
-        <div class="axis-row">
-          <span>Y</span>
-          <input type="range" id="lightY" min="-5" max="5" step="0.1" value="2">
-          <span class="slider-val" id="lightYVal">2.0</span>
-        </div>
-        <div class="axis-row">
-          <span>Z</span>
-          <input type="range" id="lightZ" min="-5" max="5" step="0.1" value="2">
-          <span class="slider-val" id="lightZVal">2.0</span>
-        </div>
+        <div class="axis-row"><span>X</span><input type="range" id="lightX" min="-5" max="5" step="0.1" value="2"><span class="slider-val" id="lightXVal">2.0</span></div>
+        <div class="axis-row"><span>Y</span><input type="range" id="lightY" min="-5" max="5" step="0.1" value="2"><span class="slider-val" id="lightYVal">2.0</span></div>
+        <div class="axis-row"><span>Z</span><input type="range" id="lightZ" min="-5" max="5" step="0.1" value="2"><span class="slider-val" id="lightZVal">2.0</span></div>
       </div>
 
       <div class="button-grid">
-        <button id="btnFlatSmooth">Flat / Smooth (F)</button>
-        <button id="btnTexture">Texture (T)</button>
-        <button id="btnLightOrbit">Light Orbit (L)</button>
-        <button id="btnCameraOrbit">Camera Orbit</button>
+        <button id="btnFlatSmooth" class="toggle-btn">Flat / Smooth (F)<span class="indicator"></span></button>
+        <button id="btnTexture"    class="toggle-btn">Texture (T)<span class="indicator"></span></button>
+        <button id="btnLightOrbit" class="toggle-btn">Light Orbit (L)<span class="indicator"></span></button>
+        <button id="btnCameraOrbit" class="toggle-btn">Camera Orbit<span class="indicator"></span></button>
       </div>
 
-      <button class="btn-primary" id="btnStopRotation">Stop Object Rotation (P)</button>
+      <button class="btn-primary toggle-btn" id="btnStopRotation">
+        <span class="btn-label">Stop Object Rotation (P)</span><span class="indicator"></span>
+      </button>
 
       <div class="control-group">
         <label>Texture Source</label>
         <select id="textureSelect">
-          <option value="checkerboard">Checkerboard</option>
+          <option value="checker">Checkerboard</option>
+          <option value="image">Image Texture</option>
         </select>
       </div>
 
@@ -117,6 +93,7 @@
         <select id="filterSelect">
           <option value="LINEAR">LINEAR</option>
           <option value="NEAREST">NEAREST</option>
+          <option value="LINEAR_MIPMAP">LINEAR_MIPMAP</option>
         </select>
       </div>
 
@@ -125,7 +102,6 @@
         <select id="wrapSelect">
           <option value="REPEAT">REPEAT</option>
           <option value="CLAMP_TO_EDGE">CLAMP_TO_EDGE</option>
-          <option value="MIRRORED_REPEAT">MIRRORED_REPEAT</option>
         </select>
       </div>
 
@@ -140,31 +116,20 @@
 
       <div class="control-group">
         <label>NON-UNIFORM SCALE</label>
-        <div class="axis-row">
-          <span>X</span>
-          <input type="range" id="scaleX" min="0.2" max="2.0" step="0.1" value="1.0">
-          <span class="slider-val" id="scaleXVal">1.0</span>
-        </div>
-        <div class="axis-row">
-          <span>Y</span>
-          <input type="range" id="scaleY" min="0.2" max="2.0" step="0.1" value="1.0">
-          <span class="slider-val" id="scaleYVal">1.0</span>
-        </div>
-        <div class="axis-row">
-          <span>Z</span>
-          <input type="range" id="scaleZ" min="0.2" max="2.0" step="0.1" value="1.0">
-          <span class="slider-val" id="scaleZVal">1.0</span>
-        </div>
+        <div class="axis-row"><span>X</span><input type="range" id="scaleX" min="0.2" max="2.0" step="0.1" value="1.0"><span class="slider-val" id="scaleXVal">1.0</span></div>
+        <div class="axis-row"><span>Y</span><input type="range" id="scaleY" min="0.2" max="2.0" step="0.1" value="1.0"><span class="slider-val" id="scaleYVal">1.0</span></div>
+        <div class="axis-row"><span>Z</span><input type="range" id="scaleZ" min="0.2" max="2.0" step="0.1" value="1.0"><span class="slider-val" id="scaleZVal">1.0</span></div>
       </div>
 
-      <button class="btn-danger" id="btnReset">Reset Scene (R)</button>
+      <button class="btn-danger" id="btnReset">⟲ Reset Scene (R)</button>
 
       <div class="keyboard-legend">
-        <strong>Keyboard</strong>
-        <p>Arrow: Light X/Y &nbsp; W/S: Light Z</p>
-        <p>Q/E: Camera X &nbsp; F: Flat/Smooth</p>
-        <p>T: Texture &nbsp; L: Light Orbit &nbsp; R: Reset</p>
-        <p>P: stop/resume object rotation</p>
+        <strong>◢ KEYBOARD</strong>
+        <p>Arrow / W S &nbsp;→&nbsp; Light X Y Z</p>
+        <p>F &nbsp;→&nbsp; Flat / Smooth</p>
+        <p>T &nbsp;→&nbsp; Texture &nbsp; L &nbsp;→&nbsp; Light Orbit</p>
+        <p>P &nbsp;→&nbsp; Pause Rotation &nbsp; R &nbsp;→&nbsp; Reset</p>
+        <p>[ ] &nbsp;→&nbsp; UV Scale &nbsp; - + &nbsp;→&nbsp; Shininess</p>
       </div>
     </div>
 
