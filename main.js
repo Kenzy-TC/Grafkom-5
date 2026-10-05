@@ -183,6 +183,7 @@ void main() {
   gl_Position = u_projection * u_view * wp;
 }`;
 
+// ★ FIX: pakai variabel `tc`, BUKAN `texColor`
 const fsSource = `#version 300 es
 precision highp float;
 in vec3 v_worldPosition;
@@ -215,11 +216,11 @@ void main() {
   if (diff > 0.0) {
     spec = pow(max(dot(R, V), 0.0), u_shininess);
   }
-  vec3 sampled = texture(u_texture,v_texCoord).rgb;
-  vec3 plain = vec3(0.85, 0.85, 0.85);
-  vec3 tc = mix(plain, sampled, u_useTexture);
-  vec3 ambient  = u_useAmbient  * u_ambientStrength * texColor;
-  vec3 diffuse  = u_useDiffuse  * diff * u_lightColor * texColor;
+  vec3 sampled = texture(u_texture, v_texCoord).rgb;
+  vec3 plain   = vec3(0.85, 0.85, 0.85);
+  vec3 tc      = mix(plain, sampled, u_useTexture);
+  vec3 ambient  = u_useAmbient  * u_ambientStrength * tc;
+  vec3 diffuse  = u_useDiffuse  * diff * u_lightColor * tc;
   vec3 specular = u_useSpecular * spec * u_lightColor;
   outColor = vec4(ambient + diffuse + specular, 1.0);
 }`;
@@ -271,17 +272,17 @@ const L = {
   useAmb:   gl.getUniformLocation(program, "u_useAmbient"),
   useDiff:  gl.getUniformLocation(program, "u_useDiffuse"),
   useSpec:  gl.getUniformLocation(program, "u_useSpecular"),
-  flat:   gl.getUniformLocation(program, "u_flatShading"),
-  useTex: gl.getUniformLocation(program, "u_useTexture"),
+  flat:     gl.getUniformLocation(program, "u_flatShading"),
+  useTex:   gl.getUniformLocation(program, "u_useTexture"),
 };
 
 // ============================================================
 // 6. BUFFERS
 // ============================================================
-let positionBuffer = gl.createBuffer();
-let normalBuffer   = gl.createBuffer();
-let uvBuffer       = gl.createBuffer();
-let currentGeometry = null;
+const positionBuffer = gl.createBuffer();
+const normalBuffer   = gl.createBuffer();
+const uvBuffer       = gl.createBuffer();
+let currentGeometry  = null;
 
 function updateGeometry(shapeName) {
   let geo;
@@ -460,17 +461,22 @@ function setToggle(btnId, isActive) {
   if (btn) btn.classList.toggle("active", isActive);
 }
 
+function txt(id, val) {
+  const el = $(id);
+  if (el) el.textContent = val;
+}
+
 // ============================================================
 // 11. UI BINDINGS — SLIDERS
 // ============================================================
 on("ambientSlider", "input", e => {
   state.ambient = parseFloat(e.target.value);
-  $("ambientVal").textContent = state.ambient.toFixed(2);
+  txt("ambientVal", state.ambient.toFixed(2));
 });
 
 on("shininessSlider", "input", e => {
   state.shininess = parseFloat(e.target.value);
-  $("shininessVal").textContent = state.shininess.toFixed(0);
+  txt("shininessVal", state.shininess.toFixed(0));
 });
 
 ["X","Y","Z"].forEach(axis => {
@@ -478,7 +484,7 @@ on("shininessSlider", "input", e => {
     const v = parseFloat(e.target.value);
     const i = axis === "X" ? 0 : axis === "Y" ? 1 : 2;
     state.lightPos[i] = v;
-    $("light" + axis + "Val").textContent = v.toFixed(1);
+    txt("light" + axis + "Val", v.toFixed(1));
   });
 });
 
@@ -486,7 +492,7 @@ on("shininessSlider", "input", e => {
   on("scale" + axis, "input", e => {
     const v = parseFloat(e.target.value);
     state["scale" + axis] = v;
-    $("scale" + axis + "Val").textContent = v.toFixed(1);
+    txt("scale" + axis + "Val", v.toFixed(1));
   });
 });
 
@@ -527,7 +533,6 @@ on("btnTexture", "click", () => {
   setToggle("btnTexture", state.useTexture);
 });
 
-
 on("btnLightOrbit", "click", () => {
   state.isLightOrbit = !state.isLightOrbit;
   setToggle("btnLightOrbit", state.isLightOrbit);
@@ -550,7 +555,7 @@ function stepAmbient(delta) {
   state.ambient = Math.max(0, Math.min(1, state.ambient + delta));
   const slider = $("ambientSlider");
   if (slider) slider.value = state.ambient;
-  $("ambientVal").textContent = state.ambient.toFixed(2);
+  txt("ambientVal", state.ambient.toFixed(2));
 }
 
 // ---- CHALLENGE C ----
@@ -560,7 +565,6 @@ function stepCameraX(delta) {
 }
 
 // ---- HOLD-TO-REPEAT HELPER ----
-// Klik sekali = 1 langkah. Tahan = trigger berulang tiap `intervalMs`.
 function holdable(id, action, intervalMs = 50) {
   const el = $(id);
   if (!el) return;
@@ -570,9 +574,7 @@ function holdable(id, action, intervalMs = 50) {
 
   const start = (e) => {
     e.preventDefault();
-    action(); // langsung 1x saat baru ditekan
-
-    // setelah 300ms, mulai repeat cepat
+    action();
     timeoutId = setTimeout(() => {
       intervalId = setInterval(action, intervalMs);
     }, 300);
@@ -590,7 +592,6 @@ function holdable(id, action, intervalMs = 50) {
   window.addEventListener("blur", stop);
 }
 
-// Pasang ke 4 tombol
 holdable("btnAmbientDown", () => stepAmbient(-0.02), 40);
 holdable("btnAmbientUp",   () => stepAmbient(+0.02), 40);
 holdable("btnCamLeft",     () => stepCameraX(-0.05), 25);
@@ -648,12 +649,12 @@ window.addEventListener("keydown", e => {
     state.shading = state.shading === "FLAT" ? "SMOOTH" : "FLAT";
     setToggle("btnFlatSmooth", state.shading === "FLAT");
   } else if (k === "t") {
-    $("btnTexture")?.classList.toggle("active");
+    state.useTexture = !state.useTexture;
     setToggle("btnTexture", state.useTexture);
   } else if (k === "g") {
     state.wrap = state.wrap === "REPEAT" ? "CLAMP_TO_EDGE" : "REPEAT";
     const s = $("wrapSelect"); if (s) s.value = state.wrap;
-    applyTexSettings();
+    applyTextureSettings();
   } else if (k === "r") {
     resetScene();
   } else if (k === "l") {
@@ -661,9 +662,9 @@ window.addEventListener("keydown", e => {
     setToggle("btnLightOrbit", state.isLightOrbit);
   } else if (k === "p") {
     state.isRotating = !state.isRotating;
-    updateRotBtn();
+    updateRotationButton();
   } else if (k === "n") {
-    toggleNonUniform();
+    toggleNonUniformScale();
   }
 });
 
@@ -690,7 +691,6 @@ function resetScene() {
   camera.orbitAngle = 0;
 
   const set = (id, val) => { const el = $(id); if (el) el.value = val; };
-  const txt = (id, val) => { const el = $(id); if (el) el.textContent = val; };
 
   set("lightX", 2);  txt("lightXVal", "2.0");
   set("lightY", 2);  txt("lightYVal", "2.0");
@@ -713,7 +713,7 @@ function resetScene() {
   state.shape = "cube";
   updateGeometry("cube");
 
-  setToggle("btnFlatSmooth", true); // SMOOTH is default
+  setToggle("btnFlatSmooth", true);
   setToggle("btnTexture", true);
   setToggle("btnLightOrbit", false);
   setToggle("btnCameraOrbit", false);
@@ -727,15 +727,19 @@ function resetScene() {
 // 17. UPDATE
 // ============================================================
 function update(dt) {
+  // ★ FIX: rotasi objek (yang tadinya hilang)
   if (state.isRotating) {
-  const ambKeySpeed = 0.5;   // per detik
-  const camKeySpeed = 3.0;   // per detik
+    state.rotX += 20.0 * dt;
+    state.rotY += 35.0 * dt;
+  }
 
+  // ★ FIX: A/Z/Q/E key handling (bukan di dalam if isRotating!)
+  const ambKeySpeed = 0.5;
+  const camKeySpeed = 3.0;
   if (keys["a"]) stepAmbient(-ambKeySpeed * dt);
   if (keys["z"]) stepAmbient(+ambKeySpeed * dt);
   if (keys["q"]) stepCameraX(-camKeySpeed * dt);
   if (keys["e"]) stepCameraX(+camKeySpeed * dt);
-  }
 
   if (state.isLightOrbit) {
     const t = performance.now() * 0.001;
@@ -775,11 +779,6 @@ function syncLight(i) {
   const slider = $("light" + axis);
   if (slider) slider.value = state.lightPos[i];
   txt("light" + axis + "Val", state.lightPos[i].toFixed(1));
-}
-
-function txt(id, val) {
-  const el = $(id);
-  if (el) el.textContent = val;
 }
 
 // ============================================================
@@ -881,7 +880,7 @@ function render(time) {
 // ============================================================
 updateGeometry("cube");
 applyTextureSettings();
-setToggle("btnFlatSmooth", true); // default SMOOTH
+setToggle("btnFlatSmooth", true);
 updateRotationButton();
 requestAnimationFrame(render);
 
