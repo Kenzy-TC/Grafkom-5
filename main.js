@@ -487,6 +487,17 @@ $("btnStopRotation").addEventListener("click", () => {
 
 $("btnReset").addEventListener("click", resetScene);
 
+// [CHALLENGE B] Tombol Ambient
+$("btnAmbientDown").addEventListener("click", () => stepAmbient(-KEY_STEP.ambient));
+$("btnAmbientUp").addEventListener("click",   () => stepAmbient(+KEY_STEP.ambient));
+
+// [CHALLENGE C] Tombol Camera
+$("btnCamLeft").addEventListener("click",  () => stepCameraX(-KEY_STEP.camera));
+$("btnCamRight").addEventListener("click", () => stepCameraX(+KEY_STEP.camera));
+
+// [CHALLENGE D] Tombol Non-Uniform Scale
+$("btnNonUniform").addEventListener("click", toggleNonUniformScale);
+
 function updateRotationButton() {
   const btn = $("btnStopRotation");
   const label = btn.querySelector(".btn-label");
@@ -496,50 +507,93 @@ function updateRotationButton() {
 
 // ==================== 11. KEYBOARD ====================
 const keys = {};
+// ==================== 11. KEYBOARD ====================
+
+// Step-based handlers (dipanggil sekali per keydown, tidak perlu ditahan)
+const KEY_STEP = {
+  ambient: 0.05,
+  camera:  0.4,
+};
+
+function stepAmbient(delta) {
+  state.ambient = Math.max(0, Math.min(1, state.ambient + delta));
+  $("ambientSlider").value = state.ambient;
+  $("ambientVal").textContent = state.ambient.toFixed(2);
+}
+
+function stepCameraX(delta) {
+  if (state.isCameraOrbit) return; // jangan tabrakan dengan auto-orbit
+  camera.pos[0] = Math.max(-6, Math.min(6, camera.pos[0] + delta));
+}
+
+function toggleNonUniformScale() {
+  state.isNonUniformScale = !state.isNonUniformScale;
+  if (state.isNonUniformScale) {
+    state.scaleX = 1.8; state.scaleY = 0.6; state.scaleZ = 1.0;
+  } else {
+    state.scaleX = 1.0; state.scaleY = 1.0; state.scaleZ = 1.0;
+  }
+  $("scaleX").value = state.scaleX; $("scaleXVal").textContent = state.scaleX.toFixed(1);
+  $("scaleY").value = state.scaleY; $("scaleYVal").textContent = state.scaleY.toFixed(1);
+  $("scaleZ").value = state.scaleZ; $("scaleZVal").textContent = state.scaleZ.toFixed(1);
+  setToggle("btnNonUniform", state.isNonUniformScale);
+}
+
+// State-based keys (untuk yang butuh ditahan)
+const keys = {};
 window.addEventListener("keydown", e => {
   keys[e.key.toLowerCase()] = true;
   if (e.key.startsWith("Arrow")) e.preventDefault();
 });
 window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
 
+// Event-based keys (step-based, satu pencet = satu aksi)
 window.addEventListener("keydown", e => {
   const k = e.key.toLowerCase();
   if (e.repeat) return;
 
-  if (k === "f") {
-    state.shading = state.shading === "FLAT" ? "SMOOTH" : "FLAT";
-    setToggle("btnFlatSmooth", state.shading === "SMOOTH");
-  }
-  if (k === "t") {
-    $("btnTexture").classList.toggle("active");
-  }
-  if (k === "g") {
-    state.wrap = state.wrap === "REPEAT" ? "CLAMP_TO_EDGE" : "REPEAT";
-    $("wrapSelect").value = state.wrap;
-    applyTextureSettings();
-  }
-  if (k === "r") resetScene();
-  if (k === "l") {
-    state.isLightOrbit = !state.isLightOrbit;
-    setToggle("btnLightOrbit", state.isLightOrbit);
-  }
-  if (k === "p") {
-    state.isRotating = !state.isRotating;
-    updateRotationButton();
-  }
-
-  // [CHALLENGE D] N — toggle non-uniform scale
-  if (k === "n") {
-    state.isNonUniformScale = !state.isNonUniformScale;
-    if (state.isNonUniformScale) {
-      state.scaleX = 1.8; state.scaleY = 0.6; state.scaleZ = 1.0;
-    } else {
-      state.scaleX = 1.0; state.scaleY = 1.0; state.scaleZ = 1.0;
-    }
-    // sinkronkan ke slider
-    $("scaleX").value = state.scaleX; $("scaleXVal").textContent = state.scaleX.toFixed(1);
-    $("scaleY").value = state.scaleY; $("scaleYVal").textContent = state.scaleY.toFixed(1);
-    $("scaleZ").value = state.scaleZ; $("scaleZVal").textContent = state.scaleZ.toFixed(1);
+  switch (k) {
+    case "f":
+      state.shading = state.shading === "FLAT" ? "SMOOTH" : "FLAT";
+      setToggle("btnFlatSmooth", state.shading === "SMOOTH");
+      break;
+    case "t":
+      $("btnTexture").classList.toggle("active");
+      break;
+    case "g":
+      state.wrap = state.wrap === "REPEAT" ? "CLAMP_TO_EDGE" : "REPEAT";
+      $("wrapSelect").value = state.wrap;
+      applyTextureSettings();
+      break;
+    case "r":
+      resetScene();
+      break;
+    case "l":
+      state.isLightOrbit = !state.isLightOrbit;
+      setToggle("btnLightOrbit", state.isLightOrbit);
+      break;
+    case "p":
+      state.isRotating = !state.isRotating;
+      updateRotationButton();
+      break;
+    // [CHALLENGE B] Ambient step-based
+    case "a":
+      stepAmbient(-KEY_STEP.ambient);
+      break;
+    case "z":
+      stepAmbient(+KEY_STEP.ambient);
+      break;
+    // [CHALLENGE C] Camera step-based
+    case "q":
+      stepCameraX(-KEY_STEP.camera);
+      break;
+    case "e":
+      stepCameraX(+KEY_STEP.camera);
+      break;
+    // [CHALLENGE D] Non-uniform toggle
+    case "n":
+      toggleNonUniformScale();
+      break;
   }
 });
 
@@ -580,7 +634,8 @@ function resetScene() {
   $("shapeSelect").value = "cube";
   state.shape = "cube";
   updateGeometry("cube");
-
+  
+  setToggle("btnNonUniform", false);
   setToggle("btnFlatSmooth", false);
   setToggle("btnTexture", false);
   setToggle("btnLightOrbit", false);
@@ -613,32 +668,6 @@ function update(dt) {
     camera.orbitAngle += 0.5 * dt;
     camera.pos[0] = Math.cos(camera.orbitAngle) * 4.0;
     camera.pos[2] = Math.sin(camera.orbitAngle) * 4.0;
-  }
-
-  // ---- [CHALLENGE C] Camera Control manual via Q / E ----
-  const camSpeed = 2.0;
-  if (!state.isCameraOrbit) {
-    if (keys["q"]) {
-      camera.pos[0] -= camSpeed * dt;
-    }
-    if (keys["e"]) {
-      camera.pos[0] += camSpeed * dt;
-    }
-    // clamp biar tidak terlalu jauh
-    camera.pos[0] = Math.max(-6, Math.min(6, camera.pos[0]));
-  }
-
-  // ---- [CHALLENGE B] Ambient Control manual via A / Z ----
-  const ambSpeed = 0.5;
-  if (keys["a"]) {
-    state.ambient = Math.max(0, state.ambient - ambSpeed * dt);
-    $("ambientSlider").value = state.ambient;
-    $("ambientVal").textContent = state.ambient.toFixed(2);
-  }
-  if (keys["z"]) {
-    state.ambient = Math.min(1, state.ambient + ambSpeed * dt);
-    $("ambientSlider").value = state.ambient;
-    $("ambientVal").textContent = state.ambient.toFixed(2);
   }
 
   // ---- Keyboard Light control (manual) ----
