@@ -197,6 +197,7 @@ uniform float u_useAmbient;
 uniform float u_useDiffuse;
 uniform float u_useSpecular;
 uniform float u_flatShading;
+uniform float u_useTexture;
 uniform sampler2D u_texture;
 out vec4 outColor;
 void main() {
@@ -214,7 +215,9 @@ void main() {
   if (diff > 0.0) {
     spec = pow(max(dot(R, V), 0.0), u_shininess);
   }
-  vec3 texColor = texture(u_texture, v_texCoord).rgb;
+  vec3 sampled = texture(u_texture,v_texCoord).rgb;
+  vec3 plain = vec3(0.85, 0.85, 0.85);
+  vec3 tc = mix(plain, sampled, u_useTexture);
   vec3 ambient  = u_useAmbient  * u_ambientStrength * texColor;
   vec3 diffuse  = u_useDiffuse  * diff * u_lightColor * texColor;
   vec3 specular = u_useSpecular * spec * u_lightColor;
@@ -268,7 +271,8 @@ const L = {
   useAmb:   gl.getUniformLocation(program, "u_useAmbient"),
   useDiff:  gl.getUniformLocation(program, "u_useDiffuse"),
   useSpec:  gl.getUniformLocation(program, "u_useSpecular"),
-  flat:     gl.getUniformLocation(program, "u_flatShading"),
+  flat:   gl.getUniformLocation(program, "u_flatShading"),
+  useTex: gl.getUniformLocation(program, "u_useTexture"),
 };
 
 // ============================================================
@@ -395,6 +399,7 @@ const state = {
   useAmbient: true,
   useDiffuse: true,
   useSpecular: true,
+  useTexture: true,
   isRotating: true,
   isLightOrbit: false,
   isCameraOrbit: false,
@@ -518,8 +523,10 @@ on("btnFlatSmooth", "click", () => {
 });
 
 on("btnTexture", "click", () => {
-  $("btnTexture").classList.toggle("active");
+  state.useTexture = !state.useTexture;
+  setToggle("btnTexture", state.useTexture);
 });
+
 
 on("btnLightOrbit", "click", () => {
   state.isLightOrbit = !state.isLightOrbit;
@@ -642,6 +649,7 @@ window.addEventListener("keydown", e => {
     setToggle("btnFlatSmooth", state.shading === "FLAT");
   } else if (k === "t") {
     $("btnTexture")?.classList.toggle("active");
+    setToggle("btnTexture", state.useTexture);
   } else if (k === "g") {
     state.wrap = state.wrap === "REPEAT" ? "CLAMP_TO_EDGE" : "REPEAT";
     const s = $("wrapSelect"); if (s) s.value = state.wrap;
@@ -672,6 +680,7 @@ function resetScene() {
   state.textureSource = "checker";
   state.scaleX = 1.0; state.scaleY = 1.0; state.scaleZ = 1.0;
   state.useAmbient = true; state.useDiffuse = true; state.useSpecular = true;
+  state.useTexture = true;
   state.isRotating = true;
   state.isLightOrbit = false;
   state.isCameraOrbit = false;
@@ -705,7 +714,7 @@ function resetScene() {
   updateGeometry("cube");
 
   setToggle("btnFlatSmooth", true); // SMOOTH is default
-  setToggle("btnTexture", false);
+  setToggle("btnTexture", true);
   setToggle("btnLightOrbit", false);
   setToggle("btnCameraOrbit", false);
   setToggle("btnNonUniform", false);
@@ -815,6 +824,7 @@ function draw() {
   gl.uniform1f(L.useDiff, state.useDiffuse ? 1.0 : 0.0);
   gl.uniform1f(L.useSpec, state.useSpecular ? 1.0 : 0.0);
   gl.uniform1f(L.flat, state.shading === "FLAT" ? 1.0 : 0.0);
+  gl.uniform1f(L.useTex, state.useTexture ? 1.0 : 0.0);
 
   gl.activeTexture(gl.TEXTURE0);
   gl.bindTexture(gl.TEXTURE_2D, getActiveTexture());
