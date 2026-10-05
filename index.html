@@ -1,39 +1,74 @@
+```html
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <title>Textured & Lit Object Playground</title>
+
   <link rel="stylesheet" href="./style.css" />
 </head>
 
 <body>
 
+  <!-- ===================================================== -->
+  <!-- SIDEBAR -->
+  <!-- ===================================================== -->
+
   <aside class="sidebar">
+
     <h2>Modul Praktikum</h2>
 
     <nav class="nav-list" aria-label="Navigasi modul">
-      <a href="#" class="nav-item">Beranda Portal</a>
-      <a href="#" class="nav-item">WebGL Primitives</a>
-      <a href="#" class="nav-item">3D Camera & Projection</a>
-      <a href="#" class="nav-item active">Lighting & Texture</a>
+
+      <a href="#" class="nav-item">
+        Beranda Portal
+      </a>
+
+      <a href="#" class="nav-item">
+        WebGL Primitives
+      </a>
+
+      <a href="#" class="nav-item">
+        3D Camera & Projection
+      </a>
+
+      <a href="#" class="nav-item active">
+        Lighting & Texture
+      </a>
+
     </nav>
 
     <div class="sidebar-note">
+
       <span class="note-dot"></span>
+
       <p>
         Eksperimen interaktif<br>
         WebGL 2.0
       </p>
+
     </div>
+
   </aside>
+
+
+  <!-- ===================================================== -->
+  <!-- MAIN CONTENT -->
+  <!-- ===================================================== -->
 
   <main class="main-content">
 
     <div class="content-wrapper">
 
-      <!-- ================= HEADER ================= -->
+      <!-- ================================================= -->
+      <!-- HEADER -->
+      <!-- ================================================= -->
+
       <header>
+
         <div class="dept-badge">
           Teknik Informatika / Week 05
         </div>
@@ -45,98 +80,184 @@
         <p>
           WebGL2 — Lighting, Shading, Texture Mapping &amp; Normal Matrix.
         </p>
+
       </header>
 
 
-      <!-- ================= TEAM ================= -->
-      <section class="team-container" aria-label="Informasi praktikum">
+      <!-- ================================================= -->
+      <!-- TEAM -->
+      <!-- ================================================= -->
+
+      <section
+        class="team-container"
+        aria-label="Informasi praktikum"
+      >
 
         <article class="team-card">
-          <div class="avatar">MN</div>
+
+          <div class="avatar">
+            MN
+          </div>
 
           <div class="team-info">
-            <span class="name">Mario Napitupulu</span>
-            <span class="nim">5025241085</span>
+
+            <span class="name">
+              Mario Napitupulu
+            </span>
+
+            <span class="nim">
+              5025241085
+            </span>
+
           </div>
+
         </article>
 
+
         <article class="team-card">
-          <div class="avatar">NY</div>
+
+          <div class="avatar">
+            NY
+          </div>
 
           <div class="team-info">
-            <span class="name">Nathanael Oliver A. Y.</span>
-            <span class="nim">5025241109</span>
+
+            <span class="name">
+              Nathanael Oliver A. Y.
+            </span>
+
+            <span class="nim">
+              5025241109
+            </span>
+
           </div>
+
         </article>
 
       </section>
 
 
       <!-- ================================================= -->
-      <!-- ================= CONTROLS ====================== -->
+      <!-- CONTROLS -->
       <!-- ================================================= -->
 
-      <section class="controls-bar" aria-label="Kontrol playground">
+      <section
+        class="controls-bar"
+        aria-label="Kontrol playground"
+      >
 
-        <!-- Bentuk Objek -->
+        <!-- OBJECT -->
+
         <div class="control-group">
+
           <label for="shapeSelect">
             Bentuk Objek
           </label>
 
           <select id="shapeSelect">
-            <option value="cube">Kubus</option>
-            <option value="sphere">Bola</option>
-            <option value="torus">Torus</option>
-            <option value="torusKnot">Torus Knot</option>
+
+            <option value="cube">
+              Kubus
+            </option>
+
+            <option value="sphere">
+              Bola
+            </option>
+
+            <option value="torus">
+              Torus
+            </option>
+
+            <option value="torusKnot">
+              Torus Knot
+            </option>
+
           </select>
+
         </div>
 
 
-        <!-- Texture Source -->
+        <!-- TEXTURE -->
+
         <div class="control-group">
+
           <label for="textureSelect">
             Texture Source
           </label>
 
           <select id="textureSelect">
-            <option value="checker">Checkerboard</option>
-            <option value="image">Image Texture</option>
+
+            <option value="checker">
+              Checkerboard
+            </option>
+
+            <option value="image">
+              Image Texture
+            </option>
+
           </select>
+
         </div>
 
 
-        <!-- Filtering -->
+        <!-- FILTERING -->
+
         <div class="control-group">
+
           <label for="filterSelect">
             Filtering
           </label>
 
           <select id="filterSelect">
-            <option value="LINEAR">LINEAR</option>
-            <option value="NEAREST">NEAREST</option>
-            <option value="LINEAR_MIPMAP">LINEAR_MIPMAP</option>
+
+            <option value="LINEAR">
+              LINEAR
+            </option>
+
+            <option value="NEAREST">
+              NEAREST
+            </option>
+
+            <option value="LINEAR_MIPMAP">
+              LINEAR MIPMAP
+            </option>
+
           </select>
+
         </div>
 
 
-        <!-- Wrapping -->
+        <!-- WRAPPING -->
+
         <div class="control-group">
+
           <label for="wrapSelect">
             Wrapping
           </label>
 
           <select id="wrapSelect">
-            <option value="REPEAT">REPEAT</option>
-            <option value="CLAMP_TO_EDGE">CLAMP_TO_EDGE</option>
+
+            <option value="REPEAT">
+              REPEAT
+            </option>
+
+            <option value="CLAMP_TO_EDGE">
+              CLAMP TO EDGE
+            </option>
+
           </select>
+
         </div>
 
 
-        <!-- Ambient Strength -->
-        <div class="control-group">
+        <!-- ================================================= -->
+        <!-- AMBIENT -->
+        <!-- ================================================= -->
+
+        <div class="control-group challenge-control">
 
           <div class="range-heading">
+
             <label for="ambientSlider">
               Ambient Strength
             </label>
@@ -147,6 +268,7 @@
             >
               0.18
             </output>
+
           </div>
 
           <input
@@ -158,13 +280,20 @@
             value="0.18"
           />
 
+          <small>
+            <kbd>A</kbd> decrease /
+            <kbd>Z</kbd> increase
+          </small>
+
         </div>
 
 
-        <!-- Shininess -->
+        <!-- SHININESS -->
+
         <div class="control-group">
 
           <div class="range-heading">
+
             <label for="shininessSlider">
               Shininess
             </label>
@@ -175,6 +304,7 @@
             >
               32
             </output>
+
           </div>
 
           <input
@@ -186,13 +316,20 @@
             value="32"
           />
 
+          <small>
+            <kbd>-</kbd> decrease /
+            <kbd>+</kbd> increase
+          </small>
+
         </div>
 
 
-        <!-- Light X -->
+        <!-- LIGHT X -->
+
         <div class="control-group">
 
           <div class="range-heading">
+
             <label for="lightX">
               Light X
             </label>
@@ -203,6 +340,7 @@
             >
               2.0
             </output>
+
           </div>
 
           <input
@@ -217,10 +355,12 @@
         </div>
 
 
-        <!-- Light Y -->
+        <!-- LIGHT Y -->
+
         <div class="control-group">
 
           <div class="range-heading">
+
             <label for="lightY">
               Light Y
             </label>
@@ -231,6 +371,7 @@
             >
               2.0
             </output>
+
           </div>
 
           <input
@@ -245,10 +386,12 @@
         </div>
 
 
-        <!-- Light Z -->
+        <!-- LIGHT Z -->
+
         <div class="control-group">
 
           <div class="range-heading">
+
             <label for="lightZ">
               Light Z
             </label>
@@ -259,6 +402,7 @@
             >
               2.0
             </output>
+
           </div>
 
           <input
@@ -273,10 +417,21 @@
         </div>
 
 
-        <!-- Scale X -->
+        <!-- ================================================= -->
+        <!-- SCALE -->
+        <!-- ================================================= -->
+
+        <div class="control-section-title">
+          Object Scaling
+        </div>
+
+
+        <!-- SCALE X -->
+
         <div class="control-group">
 
           <div class="range-heading">
+
             <label for="scaleX">
               Scale X
             </label>
@@ -287,6 +442,7 @@
             >
               1.0
             </output>
+
           </div>
 
           <input
@@ -301,10 +457,12 @@
         </div>
 
 
-        <!-- Scale Y -->
+        <!-- SCALE Y -->
+
         <div class="control-group">
 
           <div class="range-heading">
+
             <label for="scaleY">
               Scale Y
             </label>
@@ -315,6 +473,7 @@
             >
               1.0
             </output>
+
           </div>
 
           <input
@@ -329,10 +488,12 @@
         </div>
 
 
-        <!-- Scale Z -->
+        <!-- SCALE Z -->
+
         <div class="control-group">
 
           <div class="range-heading">
+
             <label for="scaleZ">
               Scale Z
             </label>
@@ -343,6 +504,7 @@
             >
               1.0
             </output>
+
           </div>
 
           <input
@@ -357,7 +519,10 @@
         </div>
 
 
-        <!-- Lighting Components -->
+        <!-- ================================================= -->
+        <!-- LIGHTING COMPONENTS -->
+        <!-- ================================================= -->
+
         <div class="control-group wide">
 
           <label>
@@ -397,89 +562,11 @@
 
         </div>
 
-
-        <!-- Action Buttons -->
-        <div class="control-group action-controls">
-
-          <!-- Flat / Smooth -->
-          <button
-            id="btnFlatSmooth"
-            class="btn toggle-btn"
-            type="button"
-          >
-            Flat / Smooth
-            <kbd>F</kbd>
-            <span class="indicator"></span>
-          </button>
-
-
-          <!-- Texture -->
-          <button
-            id="btnTexture"
-            class="btn toggle-btn"
-            type="button"
-          >
-            Texture
-            <kbd>T</kbd>
-            <span class="indicator"></span>
-          </button>
-
-
-          <!-- Light Orbit -->
-          <button
-            id="btnLightOrbit"
-            class="btn toggle-btn"
-            type="button"
-          >
-            Light Orbit
-            <kbd>L</kbd>
-            <span class="indicator"></span>
-          </button>
-
-
-          <!-- Camera Orbit -->
-          <button
-            id="btnCameraOrbit"
-            class="btn toggle-btn"
-            type="button"
-          >
-            Camera Orbit
-            <span class="indicator"></span>
-          </button>
-
-
-          <!-- Stop / Start Object Rotation -->
-          <button
-            id="btnStopRotation"
-            class="btn primary toggle-btn"
-            type="button"
-          >
-            <span class="btn-label">
-              Stop Object Rotation
-              <kbd>P</kbd>
-            </span>
-
-            <span class="indicator"></span>
-          </button>
-
-
-          <!-- Reset -->
-          <button
-            id="btnReset"
-            class="btn btn-danger"
-            type="button"
-          >
-            Reset Scene
-            <kbd>R</kbd>
-          </button>
-
-        </div>
-
       </section>
 
 
       <!-- ================================================= -->
-      <!-- ================= CANVAS ======================== -->
+      <!-- CANVAS -->
       <!-- ================================================= -->
 
       <section class="canvas-section">
@@ -487,6 +574,7 @@
         <div class="canvas-heading">
 
           <div>
+
             <span class="section-kicker">
               LIVE RENDER
             </span>
@@ -494,6 +582,7 @@
             <h2>
               WebGL Canvas
             </h2>
+
           </div>
 
           <span
@@ -506,38 +595,183 @@
         </div>
 
 
-        <div class="canvas-wrapper">
+        <!-- ================================================= -->
+        <!-- CANVAS + SIDE CONTROLS -->
+        <!-- ================================================= -->
 
-          <div class="canvas-frame">
+        <div class="canvas-layout">
 
-            <canvas
-              id="glCanvas"
-              width="1100"
-              height="650"
-            ></canvas>
+          <!-- ========================= -->
+          <!-- CANVAS -->
+          <!-- ========================= -->
 
-            <div class="corner top-left">
-              NORMAL MATRIX
+          <div class="canvas-wrapper">
+
+            <div class="canvas-frame">
+
+              <canvas
+                id="glCanvas"
+                width="1100"
+                height="650"
+              ></canvas>
+
+              <div class="corner top-left">
+                NORMAL MATRIX
+              </div>
+
+              <div class="corner top-right">
+                PHONG MODEL
+              </div>
+
+              <div class="corner bottom-left">
+                UV MAPPING
+              </div>
+
+              <div class="corner bottom-right">
+                FRAGMENT SHADER
+              </div>
+
             </div>
 
-            <div class="corner top-right">
-              PHONG MODEL
+          </div>
+
+
+          <!-- ========================= -->
+          <!-- BUTTON CONTROLS -->
+          <!-- ========================= -->
+
+          <div class="canvas-controls">
+
+            <div class="canvas-controls-title">
+              Scene Controls
             </div>
 
-            <div class="corner bottom-left">
-              UV MAPPING
-            </div>
 
-            <div class="corner bottom-right">
-              FRAGMENT SHADER
-            </div>
+            <button
+              id="btnFlatSmooth"
+              class="btn toggle-btn"
+              type="button"
+            >
+
+              <span>
+                Flat / Smooth
+              </span>
+
+              <kbd>F</kbd>
+
+              <span class="indicator"></span>
+
+            </button>
+
+
+            <button
+              id="btnTexture"
+              class="btn toggle-btn"
+              type="button"
+            >
+
+              <span>
+                Texture
+              </span>
+
+              <kbd>T</kbd>
+
+              <span class="indicator"></span>
+
+            </button>
+
+
+            <button
+              id="btnLightOrbit"
+              class="btn toggle-btn"
+              type="button"
+            >
+
+              <span>
+                Light Orbit
+              </span>
+
+              <kbd>L</kbd>
+
+              <span class="indicator"></span>
+
+            </button>
+
+
+            <button
+              id="btnCameraOrbit"
+              class="btn toggle-btn"
+              type="button"
+            >
+
+              <span>
+                Camera Orbit
+              </span>
+
+              <kbd>C</kbd>
+
+              <span class="indicator"></span>
+
+            </button>
+
+
+            <button
+              id="btnNonUniform"
+              class="btn toggle-btn"
+              type="button"
+            >
+
+              <span>
+                Non-Uniform Scale
+              </span>
+
+              <kbd>N</kbd>
+
+              <span class="indicator"></span>
+
+            </button>
+
+
+            <button
+              id="btnStopRotation"
+              class="btn primary toggle-btn"
+              type="button"
+            >
+
+              <span class="btn-label">
+
+                Stop Rotation
+
+                <kbd>P</kbd>
+
+              </span>
+
+              <span class="indicator"></span>
+
+            </button>
+
+
+            <button
+              id="btnReset"
+              class="btn btn-danger"
+              type="button"
+            >
+
+              Reset Scene
+
+              <kbd>R</kbd>
+
+            </button>
 
           </div>
 
         </div>
 
 
-        <!-- Canvas Legend -->
+        <!-- ================================================= -->
+        <!-- LEGEND -->
+        <!-- ================================================= -->
+
         <div class="legend">
 
           <span>
@@ -566,7 +800,7 @@
 
 
       <!-- ================================================= -->
-      <!-- ================= HUD ============================ -->
+      <!-- HUD -->
       <!-- ================================================= -->
 
       <section
@@ -574,16 +808,13 @@
         aria-label="Status render"
       >
 
-        <!-- Shading -->
         <div class="hud-card">
           <span>Shading</span>
           <strong id="hudShading">
-            FLAT
+            SMOOTH
           </strong>
         </div>
 
-
-        <!-- Filtering -->
         <div class="hud-card">
           <span>Filtering</span>
           <strong id="hudFiltering">
@@ -591,8 +822,6 @@
           </strong>
         </div>
 
-
-        <!-- Light -->
         <div class="hud-card">
           <span>Light</span>
           <strong id="hudLight">
@@ -600,8 +829,6 @@
           </strong>
         </div>
 
-
-        <!-- Wrapping -->
         <div class="hud-card">
           <span>Wrapping</span>
           <strong id="hudWrapping">
@@ -609,8 +836,6 @@
           </strong>
         </div>
 
-
-        <!-- Texture -->
         <div class="hud-card">
           <span>Texture</span>
           <strong id="hudTexture">
@@ -618,8 +843,6 @@
           </strong>
         </div>
 
-
-        <!-- Camera -->
         <div class="hud-card">
           <span>Camera</span>
           <strong id="hudCamera">
@@ -627,8 +850,20 @@
           </strong>
         </div>
 
+        <div class="hud-card">
+          <span>Ambient Strength</span>
+          <strong id="hudAmbient">
+            0.18
+          </strong>
+        </div>
 
-        <!-- Renderer -->
+        <div class="hud-card">
+          <span>Scale Mode</span>
+          <strong id="hudScaleMode">
+            UNIFORM
+          </strong>
+        </div>
+
         <div class="hud-card">
           <span>Renderer</span>
           <strong>
@@ -636,27 +871,44 @@
           </strong>
         </div>
 
+        <div class="hud-card">
+          <span>Object</span>
+          <strong id="hudShape">
+            CUBE
+          </strong>
+        </div>
 
-        <!-- Status -->
+        <div class="hud-card">
+          <span>Shininess</span>
+          <strong id="hudShininess">
+            32
+          </strong>
+        </div>
+
         <div class="hud-card">
           <span>Status</span>
-          <strong>
-            Active
+          <strong id="hudStatus">
+            ACTIVE
           </strong>
         </div>
 
       </section>
+
+
+      <!-- ================================================= -->
+      <!-- CHALLENGES -->
+      <!-- ================================================= -->
 
       <section class="report-section">
 
         <div class="section-header">
 
           <h4>
-            Petunjuk Interaksi
+            Challenge B / C / D
           </h4>
 
           <h2>
-            Kontrol Playground
+            Advanced Controls
           </h2>
 
         </div>
@@ -664,40 +916,192 @@
 
         <div class="instructions-grid">
 
-          <p>
-            <kbd>Arrow</kbd>
-            <kbd>W</kbd>
-            <kbd>S</kbd>
-            menggeser posisi cahaya pada sumbu X, Y, Z.
-          </p>
+          <article class="challenge-card">
 
-          <p>
-            <kbd>F</kbd>
-            toggle Flat / Smooth shading,
-            <kbd>T</kbd>
-            toggle texture.
-          </p>
+            <span class="challenge-number">
+              B
+            </span>
 
-          <p>
-            <kbd>L</kbd>
-            menjalankan orbit cahaya,
-            <kbd>P</kbd>
-            menjeda rotasi objek.
-          </p>
+            <div>
 
-          <p>
-            <kbd>[</kbd>
-            <kbd>]</kbd>
-            mengubah skala UV,
-            <kbd>-</kbd>
-            <kbd>+</kbd>
-            mengubah shininess.
-          </p>
+              <h3>
+                Ambient Control
+              </h3>
 
-          <p>
-            <kbd>R</kbd>
-            mereset semua parameter ke kondisi awal (default).
-          </p>
+              <p>
+                Atur intensitas ambient menggunakan slider.
+                Gunakan <kbd>A</kbd> untuk mengurangi
+                dan <kbd>Z</kbd> untuk meningkatkan
+                Ambient Strength.
+              </p>
+
+            </div>
+
+          </article>
+
+
+          <article class="challenge-card">
+
+            <span class="challenge-number">
+              C
+            </span>
+
+            <div>
+
+              <h3>
+                Camera Control
+              </h3>
+
+              <p>
+                Aktifkan Camera Orbit menggunakan
+                <kbd>C</kbd>. Kamera akan mengorbit
+                objek sehingga perubahan posisi viewer
+                dapat diamati melalui specular highlight.
+              </p>
+
+            </div>
+
+          </article>
+
+
+          <article class="challenge-card">
+
+            <span class="challenge-number">
+              D
+            </span>
+
+            <div>
+
+              <h3>
+                Non-Uniform Scale
+              </h3>
+
+              <p>
+                Tekan <kbd>N</kbd> untuk berpindah antara
+                Uniform dan Non-Uniform Scale.
+                Gunakan Scale X/Y/Z untuk melihat
+                pengaruh scaling terhadap Normal Matrix.
+              </p>
+
+            </div>
+
+          </article>
+
+
+          <article class="challenge-card">
+
+            <span class="challenge-number">
+              —
+            </span>
+
+            <div>
+
+              <h3>
+                Shading &amp; Texture
+              </h3>
+
+              <p>
+                <kbd>F</kbd> toggle Flat/Smooth shading,
+                sedangkan <kbd>T</kbd> mengaktifkan
+                kontrol texture.
+              </p>
+
+            </div>
+
+          </article>
+
+
+          <article class="challenge-card">
+
+            <span class="challenge-number">
+              —
+            </span>
+
+            <div>
+
+              <h3>
+                Lighting
+              </h3>
+
+              <p>
+                <kbd>L</kbd> menjalankan Light Orbit.
+                Gunakan tombol panah atau
+                <kbd>W</kbd>/<kbd>S</kbd> untuk
+                mengubah posisi sumber cahaya.
+              </p>
+
+            </div>
+
+          </article>
+
+
+          <article class="challenge-card">
+
+            <span class="challenge-number">
+              —
+            </span>
+
+            <div>
+
+              <h3>
+                Material &amp; UV
+              </h3>
+
+              <p>
+                Gunakan <kbd>[</kbd> dan <kbd>]</kbd>
+                untuk mengubah UV scale.
+                Gunakan <kbd>-</kbd> dan <kbd>+</kbd>
+                untuk mengatur shininess.
+              </p>
+
+            </div>
+
+          </article>
+
+
+          <article class="challenge-card">
+
+            <span class="challenge-number">
+              —
+            </span>
+
+            <div>
+
+              <h3>
+                Object Rotation
+              </h3>
+
+              <p>
+                Tekan <kbd>P</kbd> untuk menghentikan
+                atau menjalankan kembali rotasi objek.
+              </p>
+
+            </div>
+
+          </article>
+
+
+          <article class="challenge-card">
+
+            <span class="challenge-number">
+              —
+            </span>
+
+            <div>
+
+              <h3>
+                Reset
+              </h3>
+
+              <p>
+                Tekan <kbd>R</kbd> untuk mengembalikan
+                seluruh parameter playground ke
+                konfigurasi awal.
+              </p>
+
+            </div>
+
+          </article>
 
         </div>
 
@@ -707,6 +1111,11 @@
 
   </main>
 
+
+  <!-- ===================================================== -->
+  <!-- JAVASCRIPT -->
+  <!-- ===================================================== -->
+
   <script
     type="module"
     src="./main.js"
@@ -714,3 +1123,4 @@
 
 </body>
 </html>
+```
