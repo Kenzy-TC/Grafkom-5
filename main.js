@@ -183,7 +183,6 @@ void main() {
   gl_Position = u_projection * u_view * wp;
 }`;
 
-// ★ FIX: pakai variabel `tc`, BUKAN `texColor`
 const fsSource = `#version 300 es
 precision highp float;
 in vec3 v_worldPosition;
@@ -727,13 +726,11 @@ function resetScene() {
 // 17. UPDATE
 // ============================================================
 function update(dt) {
-  // ★ FIX: rotasi objek (yang tadinya hilang)
   if (state.isRotating) {
     state.rotX += 20.0 * dt;
     state.rotY += 35.0 * dt;
   }
 
-  // ★ FIX: A/Z/Q/E key handling (bukan di dalam if isRotating!)
   const ambKeySpeed = 0.5;
   const camKeySpeed = 3.0;
   if (keys["a"]) stepAmbient(-ambKeySpeed * dt);
