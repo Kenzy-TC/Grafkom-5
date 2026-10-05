@@ -106,7 +106,7 @@ function createTorusKnot(p = 2, q = 3, radius = 0.6, tube = 0.22, tubularSeg = 1
     const lenT = Math.hypot(...T);
     T[0]/=lenT; T[1]/=lenT; T[2]/=lenT;
     const N = [T[1], -T[0], 0];
-    const lenN = Math.hypot(...N);
+    const lenN = Math.hypot(...N) || 1;
     N[0]/=lenN; N[1]/=lenN; N[2]/=lenN;
     const B = [
       T[1]*N[2] - T[2]*N[1],
@@ -121,7 +121,7 @@ function createTorusKnot(p = 2, q = 3, radius = 0.6, tube = 0.22, tubularSeg = 1
       const z = pos[2] + cx * N[2] + cy * B[2];
       positions.push(x, y, z);
       const nx = x - pos[0], ny = y - pos[1], nz = z - pos[2];
-      const len = Math.hypot(nx, ny, nz);
+      const len = Math.hypot(nx, ny, nz) || 1;
       normals.push(nx/len, ny/len, nz/len);
       uvs.push(i / tubularSeg, j / radialSeg);
     }
@@ -272,7 +272,6 @@ function setupAttr(buf, location, size) {
 }
 
 // ==================== 7. TEXTURES ====================
-// 7a. Checkerboard
 function createCheckerTexture() {
   const size = 64, cells = 8, cellSize = size / cells;
   const src = document.createElement("canvas");
@@ -291,13 +290,9 @@ function createCheckerTexture() {
   return tex;
 }
 
-// 7b. Image texture — coba load dari ./assets/texture.png,
-//     fallback ke procedural UV-pattern kalau gagal.
 function createImageTexture() {
   const tex = gl.createTexture();
   gl.bindTexture(gl.TEXTURE_2D, tex);
-
-  // Placeholder 1×1 dulu supaya tidak warning
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE,
     new Uint8Array([180, 20, 20, 255]));
 
@@ -305,16 +300,16 @@ function createImageTexture() {
   img.crossOrigin = "anonymous";
   img.onload = () => {
     gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
     gl.generateMipmap(gl.TEXTURE_2D);
     applyTextureParams(tex);
   };
   img.onerror = () => {
-    console.warn("[Texture] ./assets/texture.png tidak ditemukan → pakai fallback UV pattern.");
+    console.warn("[Texture] ./assets/texture.png tidak ditemukan → pakai fallback.");
     const canvas = document.createElement("canvas");
     canvas.width = canvas.height = 256;
     const ctx = canvas.getContext("2d");
-    // gradient warna-warni biar jelas bedanya dari checkerboard
     const grad = ctx.createLinearGradient(0, 0, 256, 256);
     grad.addColorStop(0.00, "#ff0099");
     grad.addColorStop(0.33, "#ffcc00");
@@ -322,7 +317,6 @@ function createImageTexture() {
     grad.addColorStop(1.00, "#0066ff");
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, 256, 256);
-    // grid
     ctx.strokeStyle = "rgba(0,0,0,0.5)";
     ctx.lineWidth = 2;
     const g = 256 / 8;
@@ -330,7 +324,6 @@ function createImageTexture() {
       ctx.beginPath(); ctx.moveTo(i*g, 0); ctx.lineTo(i*g, 256); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(0, i*g); ctx.lineTo(256, i*g); ctx.stroke();
     }
-    // label UV
     ctx.fillStyle = "#fff";
     ctx.font = "bold 22px monospace";
     ctx.fillText("U →", 10, 30);
@@ -349,7 +342,6 @@ function createImageTexture() {
 const checkerTexture = createCheckerTexture();
 const imageTexture = createImageTexture();
 
-// State texture unit → selalu di TEXTURE0
 gl.activeTexture(gl.TEXTURE0);
 gl.uniform1i(loc.tex, 0);
 
@@ -359,9 +351,9 @@ const state = {
   rotX: 20, rotY: 30,
   scaleX: 1, scaleY: 1, scaleZ: 1,
   shading: "FLAT",
-  textureSource: "checker",  // "checker" | "image"
-  filter: "LINEAR",          // "LINEAR" | "NEAREST" | "LINEAR_MIPMAP"
-  wrap: "REPEAT",            // "REPEAT" | "CLAMP_TO_EDGE"
+  textureSource: "checker",
+  filter: "LINEAR",
+  wrap: "REPEAT",
   uvScale: 1.0,
   ambient: 0.18,
   shininess: 32.0,
@@ -371,6 +363,7 @@ const state = {
   isRotating: true,
   isLightOrbit: false,
   isCameraOrbit: false,
+  isNonUniformScale: false,  // [CHALLENGE D]
   lightPos: [2, 2, 2],
   lightColor: [1, 1, 1],
 };
@@ -387,7 +380,6 @@ function applyTextureParams(tex) {
   if (!tex) return;
   gl.bindTexture(gl.TEXTURE_2D, tex);
 
-  // FILTERING
   if (state.filter === "NEAREST") {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
@@ -399,7 +391,6 @@ function applyTextureParams(tex) {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
   }
 
-  // WRAPPING
   const wMode = state.wrap === "CLAMP_TO_EDGE" ? gl.CLAMP_TO_EDGE : gl.REPEAT;
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wMode);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wMode);
@@ -448,9 +439,7 @@ $("shininessSlider").addEventListener("input", e => {
   });
 });
 
-$("textureSelect").addEventListener("change", e => {
-  state.textureSource = e.target.value;
-});
+$("textureSelect").addEventListener("change", e => state.textureSource = e.target.value);
 
 $("filterSelect").addEventListener("change", e => {
   state.filter = e.target.value;
@@ -466,7 +455,6 @@ $("chkAmbient").addEventListener("change",  e => state.useAmbient  = e.target.ch
 $("chkDiffuse").addEventListener("change",  e => state.useDiffuse  = e.target.checked);
 $("chkSpecular").addEventListener("change", e => state.useSpecular = e.target.checked);
 
-// ---- Toggle Buttons ----
 function setToggle(btnId, isActive) {
   const btn = $(btnId);
   if (!btn) return;
@@ -501,8 +489,8 @@ $("btnReset").addEventListener("click", resetScene);
 
 function updateRotationButton() {
   const btn = $("btnStopRotation");
-  btn.querySelector(".btn-label").textContent =
-    state.isRotating ? "Stop Object Rotation (P)" : "Start Object Rotation (P)";
+  const label = btn.querySelector(".btn-label");
+  if (label) label.textContent = state.isRotating ? "Stop Object Rotation (P)" : "Start Object Rotation (P)";
   setToggle("btnStopRotation", state.isRotating);
 }
 
@@ -517,6 +505,7 @@ window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
 window.addEventListener("keydown", e => {
   const k = e.key.toLowerCase();
   if (e.repeat) return;
+
   if (k === "f") {
     state.shading = state.shading === "FLAT" ? "SMOOTH" : "FLAT";
     setToggle("btnFlatSmooth", state.shading === "SMOOTH");
@@ -525,7 +514,6 @@ window.addEventListener("keydown", e => {
     $("btnTexture").classList.toggle("active");
   }
   if (k === "g") {
-    // hanya 2 mode wrapping
     state.wrap = state.wrap === "REPEAT" ? "CLAMP_TO_EDGE" : "REPEAT";
     $("wrapSelect").value = state.wrap;
     applyTextureSettings();
@@ -538,6 +526,20 @@ window.addEventListener("keydown", e => {
   if (k === "p") {
     state.isRotating = !state.isRotating;
     updateRotationButton();
+  }
+
+  // [CHALLENGE D] N — toggle non-uniform scale
+  if (k === "n") {
+    state.isNonUniformScale = !state.isNonUniformScale;
+    if (state.isNonUniformScale) {
+      state.scaleX = 1.8; state.scaleY = 0.6; state.scaleZ = 1.0;
+    } else {
+      state.scaleX = 1.0; state.scaleY = 1.0; state.scaleZ = 1.0;
+    }
+    // sinkronkan ke slider
+    $("scaleX").value = state.scaleX; $("scaleXVal").textContent = state.scaleX.toFixed(1);
+    $("scaleY").value = state.scaleY; $("scaleYVal").textContent = state.scaleY.toFixed(1);
+    $("scaleZ").value = state.scaleZ; $("scaleZVal").textContent = state.scaleZ.toFixed(1);
   }
 });
 
@@ -555,6 +557,11 @@ function resetScene() {
   state.isRotating = true;
   state.isLightOrbit = false;
   state.isCameraOrbit = false;
+  state.isNonUniformScale = false;
+
+  // reset camera juga
+  camera.pos = [0, 1.4, 4.0];
+  camera.orbitAngle = 0;
 
   $("lightX").value = 2; $("lightXVal").textContent = "2.0";
   $("lightY").value = 2; $("lightYVal").textContent = "2.0";
@@ -590,6 +597,7 @@ function update(dt) {
     state.rotY += 35.0 * dt;
   }
 
+  // ---- Light Orbit [CHALLENGE E] ----
   if (state.isLightOrbit) {
     const t = performance.now() * 0.001;
     state.lightPos[0] = Math.cos(t) * 3.0;
@@ -600,12 +608,40 @@ function update(dt) {
     $("lightZVal").textContent = state.lightPos[2].toFixed(1);
   }
 
+  // ---- Camera Orbit (auto) ----
   if (state.isCameraOrbit) {
     camera.orbitAngle += 0.5 * dt;
     camera.pos[0] = Math.cos(camera.orbitAngle) * 4.0;
     camera.pos[2] = Math.sin(camera.orbitAngle) * 4.0;
   }
 
+  // ---- [CHALLENGE C] Camera Control manual via Q / E ----
+  const camSpeed = 2.0;
+  if (!state.isCameraOrbit) {
+    if (keys["q"]) {
+      camera.pos[0] -= camSpeed * dt;
+    }
+    if (keys["e"]) {
+      camera.pos[0] += camSpeed * dt;
+    }
+    // clamp biar tidak terlalu jauh
+    camera.pos[0] = Math.max(-6, Math.min(6, camera.pos[0]));
+  }
+
+  // ---- [CHALLENGE B] Ambient Control manual via A / Z ----
+  const ambSpeed = 0.5;
+  if (keys["a"]) {
+    state.ambient = Math.max(0, state.ambient - ambSpeed * dt);
+    $("ambientSlider").value = state.ambient;
+    $("ambientVal").textContent = state.ambient.toFixed(2);
+  }
+  if (keys["z"]) {
+    state.ambient = Math.min(1, state.ambient + ambSpeed * dt);
+    $("ambientSlider").value = state.ambient;
+    $("ambientVal").textContent = state.ambient.toFixed(2);
+  }
+
+  // ---- Keyboard Light control (manual) ----
   const speed = 2.0;
   if (!state.isLightOrbit) {
     if (keys["arrowleft"])  { state.lightPos[0] -= speed * dt; $("lightX").value = state.lightPos[0]; $("lightXVal").textContent = state.lightPos[0].toFixed(1); }
