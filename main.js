@@ -1,12 +1,19 @@
 import { Mat4, normalMatrixFromMat4, degToRad } from "./math3d.js";
 
-// ==================== 1. SETUP WEBGL ====================
+// ============================================================
+// 1. SETUP
+// ============================================================
 const canvas = document.getElementById("glCanvas");
 const gl = canvas.getContext("webgl2");
-if (!gl) throw new Error("WebGL2 tidak tersedia.");
+if (!gl) {
+  document.body.innerHTML = "<h1 style='color:red;padding:20px;'>WebGL2 tidak tersedia di browser ini.</h1>";
+  throw new Error("WebGL2 not available");
+}
 gl.enable(gl.DEPTH_TEST);
 
-// ==================== 2. GEOMETRY GENERATORS ====================
+// ============================================================
+// 2. GEOMETRY
+// ============================================================
 function createCube() {
   const p = new Float32Array([
     -0.5,-0.5, 0.5,  0.5,-0.5, 0.5,  0.5, 0.5, 0.5,
@@ -25,7 +32,7 @@ function createCube() {
   const n = new Float32Array(p.length);
   for (let i = 0; i < p.length; i += 3) {
     const x = p[i], y = p[i+1], z = p[i+2];
-    const len = Math.hypot(x, y, z);
+    const len = Math.hypot(x, y, z) || 1;
     n[i] = x/len; n[i+1] = y/len; n[i+2] = z/len;
   }
   const faceUV = [0,0, 1,0, 1,1, 0,0, 1,1, 0,1];
@@ -35,77 +42,77 @@ function createCube() {
 }
 
 function createSphere(radius = 0.75, latBands = 32, longBands = 32) {
-  const positions = [], normals = [], uvs = [];
+  const pos = [], nrm = [], uvs = [];
   for (let lat = 0; lat <= latBands; lat++) {
     const theta = (lat * Math.PI) / latBands;
-    const sinTheta = Math.sin(theta), cosTheta = Math.cos(theta);
+    const sinT = Math.sin(theta), cosT = Math.cos(theta);
     for (let lon = 0; lon <= longBands; lon++) {
       const phi = (lon * 2 * Math.PI) / longBands;
-      const sinPhi = Math.sin(phi), cosPhi = Math.cos(phi);
-      const x = cosPhi * sinTheta, y = cosTheta, z = sinPhi * sinTheta;
-      positions.push(radius * x, radius * y, radius * z);
-      normals.push(x, y, z);
-      uvs.push(lon / longBands, lat / latBands);
+      const sinP = Math.sin(phi), cosP = Math.cos(phi);
+      const x = cosP * sinT, y = cosT, z = sinP * sinT;
+      pos.push(radius*x, radius*y, radius*z);
+      nrm.push(x, y, z);
+      uvs.push(lon/longBands, lat/latBands);
     }
   }
-  const indices = [];
+  const idx = [];
   for (let lat = 0; lat < latBands; lat++) {
     for (let lon = 0; lon < longBands; lon++) {
-      const first = lat * (longBands + 1) + lon;
+      const first = lat*(longBands+1) + lon;
       const second = first + longBands + 1;
-      indices.push(first, second, first + 1);
-      indices.push(second, second + 1, first + 1);
+      idx.push(first, second, first+1);
+      idx.push(second, second+1, first+1);
     }
   }
-  return buildGeometry(positions, normals, uvs, indices);
+  return buildGeometry(pos, nrm, uvs, idx);
 }
 
 function createTorus(R = 0.6, r = 0.25, majorSeg = 48, minorSeg = 24) {
-  const positions = [], normals = [], uvs = [];
+  const pos = [], nrm = [], uvs = [];
   for (let i = 0; i <= majorSeg; i++) {
-    const u = (i / majorSeg) * 2 * Math.PI;
+    const u = (i/majorSeg) * 2 * Math.PI;
     const cosU = Math.cos(u), sinU = Math.sin(u);
     for (let j = 0; j <= minorSeg; j++) {
-      const v = (j / minorSeg) * 2 * Math.PI;
+      const v = (j/minorSeg) * 2 * Math.PI;
       const cosV = Math.cos(v), sinV = Math.sin(v);
-      positions.push((R + r * cosV) * cosU, (R + r * cosV) * sinU, r * sinV);
-      normals.push(cosV * cosU, cosV * sinU, sinV);
-      uvs.push(i / majorSeg, j / minorSeg);
+      pos.push((R + r*cosV)*cosU, (R + r*cosV)*sinU, r*sinV);
+      nrm.push(cosV*cosU, cosV*sinU, sinV);
+      uvs.push(i/majorSeg, j/minorSeg);
     }
   }
-  const indices = [];
+  const idx = [];
   for (let i = 0; i < majorSeg; i++) {
     for (let j = 0; j < minorSeg; j++) {
-      const a = i * (minorSeg + 1) + j;
+      const a = i*(minorSeg+1) + j;
       const b = a + minorSeg + 1;
-      indices.push(a, b, a + 1);
-      indices.push(b, b + 1, a + 1);
+      idx.push(a, b, a+1);
+      idx.push(b, b+1, a+1);
     }
   }
-  return buildGeometry(positions, normals, uvs, indices);
+  return buildGeometry(pos, nrm, uvs, idx);
 }
 
 function createTorusKnot(p = 2, q = 3, radius = 0.6, tube = 0.22, tubularSeg = 128, radialSeg = 16) {
-  const positions = [], normals = [], uvs = [];
+  const pos = [], nrm = [], uvs = [];
   const P = (t) => {
-    const cu = Math.cos(t * p), su = Math.sin(t * p);
+    const cu = Math.cos(t*p), su = Math.sin(t*p);
     const quOverP = q / p;
-    const cs = Math.cos(t * quOverP);
+    const cs = Math.cos(t*quOverP);
     return [
       radius * (2 + cs) * 0.5 * cu,
       radius * (2 + cs) * su * 0.5,
-      radius * Math.sin(t * quOverP) * 0.5
+      radius * Math.sin(t*quOverP) * 0.5
     ];
   };
   for (let i = 0; i <= tubularSeg; i++) {
-    const u = (i / tubularSeg) * 2 * Math.PI * p;
-    const pos = P(u);
+    const u = (i/tubularSeg) * 2 * Math.PI * p;
+    const pos1 = P(u);
     const eps = 0.001;
     const pos2 = P(u + eps);
-    const T = [pos2[0]-pos[0], pos2[1]-pos[1], pos2[2]-pos[2]];
-    const lenT = Math.hypot(...T);
+    const T = [pos2[0]-pos1[0], pos2[1]-pos1[1], pos2[2]-pos1[2]];
+    const lenT = Math.hypot(...T) || 1;
     T[0]/=lenT; T[1]/=lenT; T[2]/=lenT;
-    const N = [T[1], -T[0], 0];
+    let N = [T[1], -T[0], 0];
     const lenN = Math.hypot(...N) || 1;
     N[0]/=lenN; N[1]/=lenN; N[2]/=lenN;
     const B = [
@@ -114,28 +121,29 @@ function createTorusKnot(p = 2, q = 3, radius = 0.6, tube = 0.22, tubularSeg = 1
       T[0]*N[1] - T[1]*N[0]
     ];
     for (let j = 0; j <= radialSeg; j++) {
-      const v = (j / radialSeg) * 2 * Math.PI;
-      const cx = -tube * Math.cos(v), cy = tube * Math.sin(v);
-      const x = pos[0] + cx * N[0] + cy * B[0];
-      const y = pos[1] + cx * N[1] + cy * B[1];
-      const z = pos[2] + cx * N[2] + cy * B[2];
-      positions.push(x, y, z);
-      const nx = x - pos[0], ny = y - pos[1], nz = z - pos[2];
+      const v = (j/radialSeg) * 2 * Math.PI;
+      const cx = -tube * Math.cos(v);
+      const cy =  tube * Math.sin(v);
+      const x = pos1[0] + cx*N[0] + cy*B[0];
+      const y = pos1[1] + cx*N[1] + cy*B[1];
+      const z = pos1[2] + cx*N[2] + cy*B[2];
+      pos.push(x, y, z);
+      const nx = x - pos1[0], ny = y - pos1[1], nz = z - pos1[2];
       const len = Math.hypot(nx, ny, nz) || 1;
-      normals.push(nx/len, ny/len, nz/len);
-      uvs.push(i / tubularSeg, j / radialSeg);
+      nrm.push(nx/len, ny/len, nz/len);
+      uvs.push(i/tubularSeg, j/radialSeg);
     }
   }
-  const indices = [];
+  const idx = [];
   for (let i = 0; i < tubularSeg; i++) {
     for (let j = 0; j < radialSeg; j++) {
-      const a = i * (radialSeg + 1) + j;
+      const a = i*(radialSeg+1) + j;
       const b = a + radialSeg + 1;
-      indices.push(a, b, a + 1);
-      indices.push(b, b + 1, a + 1);
+      idx.push(a, b, a+1);
+      idx.push(b, b+1, a+1);
     }
   }
-  return buildGeometry(positions, normals, uvs, indices);
+  return buildGeometry(pos, nrm, uvs, idx);
 }
 
 function buildGeometry(positions, normals, uvs, indices) {
@@ -148,13 +156,15 @@ function buildGeometry(positions, normals, uvs, indices) {
   }
   return {
     positions: new Float32Array(p),
-    normals: new Float32Array(n),
-    uvs: new Float32Array(uv),
+    normals:   new Float32Array(n),
+    uvs:       new Float32Array(uv),
     vertexCount: indices.length
   };
 }
 
-// ==================== 3. SHADERS ====================
+// ============================================================
+// 3. SHADERS
+// ============================================================
 const vsSource = `#version 300 es
 in vec3 a_position;
 in vec3 a_normal;
@@ -162,7 +172,8 @@ in vec2 a_texCoord;
 uniform mat4 u_model, u_view, u_projection;
 uniform mat3 u_normalMatrix;
 uniform float u_uvScale;
-out vec3 v_worldPosition, v_normal;
+out vec3 v_worldPosition;
+out vec3 v_normal;
 out vec2 v_texCoord;
 void main() {
   vec4 wp = u_model * vec4(a_position, 1.0);
@@ -174,11 +185,17 @@ void main() {
 
 const fsSource = `#version 300 es
 precision highp float;
-in vec3 v_worldPosition, v_normal;
+in vec3 v_worldPosition;
+in vec3 v_normal;
 in vec2 v_texCoord;
-uniform vec3 u_lightPosition, u_lightColor, u_cameraPosition;
-uniform float u_ambientStrength, u_shininess;
-uniform float u_useAmbient, u_useDiffuse, u_useSpecular;
+uniform vec3 u_lightPosition;
+uniform vec3 u_lightColor;
+uniform vec3 u_cameraPosition;
+uniform float u_ambientStrength;
+uniform float u_shininess;
+uniform float u_useAmbient;
+uniform float u_useDiffuse;
+uniform float u_useSpecular;
 uniform float u_flatShading;
 uniform sampler2D u_texture;
 out vec4 outColor;
@@ -194,69 +211,84 @@ void main() {
   float diff = max(dot(N, L), 0.0);
   vec3 R = reflect(-L, N);
   float spec = 0.0;
-  if (diff > 0.0) spec = pow(max(dot(R, V), 0.0), u_shininess);
+  if (diff > 0.0) {
+    spec = pow(max(dot(R, V), 0.0), u_shininess);
+  }
   vec3 texColor = texture(u_texture, v_texCoord).rgb;
-  vec3 ambient = u_useAmbient * u_ambientStrength * texColor;
-  vec3 diffuse = u_useDiffuse * diff * u_lightColor * texColor;
+  vec3 ambient  = u_useAmbient  * u_ambientStrength * texColor;
+  vec3 diffuse  = u_useDiffuse  * diff * u_lightColor * texColor;
   vec3 specular = u_useSpecular * spec * u_lightColor;
   outColor = vec4(ambient + diffuse + specular, 1.0);
 }`;
 
-// ==================== 4. COMPILE & LINK ====================
-function createShader(gl, type, src) {
+// ============================================================
+// 4. COMPILE & LINK
+// ============================================================
+function compile(type, src) {
   const s = gl.createShader(type);
-  gl.shaderSource(s, src); gl.compileShader(s);
-  if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+  gl.shaderSource(s, src);
+  gl.compileShader(s);
+  if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+    const log = gl.getShaderInfoLog(s);
+    console.error("Shader compile error:", log);
+    throw new Error(log);
+  }
   return s;
 }
-const prog = gl.createProgram();
-gl.attachShader(prog, createShader(gl, gl.VERTEX_SHADER, vsSource));
-gl.attachShader(prog, createShader(gl, gl.FRAGMENT_SHADER, fsSource));
-gl.linkProgram(prog);
-if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(prog));
-gl.useProgram(prog);
 
-// ==================== 5. LOCATIONS ====================
-const loc = {
-  pos: gl.getAttribLocation(prog, "a_position"),
-  norm: gl.getAttribLocation(prog, "a_normal"),
-  uv: gl.getAttribLocation(prog, "a_texCoord"),
-  model: gl.getUniformLocation(prog, "u_model"),
-  view: gl.getUniformLocation(prog, "u_view"),
-  proj: gl.getUniformLocation(prog, "u_projection"),
-  normMat: gl.getUniformLocation(prog, "u_normalMatrix"),
-  lightPos: gl.getUniformLocation(prog, "u_lightPosition"),
-  lightCol: gl.getUniformLocation(prog, "u_lightColor"),
-  camPos: gl.getUniformLocation(prog, "u_cameraPosition"),
-  amb: gl.getUniformLocation(prog, "u_ambientStrength"),
-  shin: gl.getUniformLocation(prog, "u_shininess"),
-  tex: gl.getUniformLocation(prog, "u_texture"),
-  uvScale: gl.getUniformLocation(prog, "u_uvScale"),
-  useAmb: gl.getUniformLocation(prog, "u_useAmbient"),
-  useDiff: gl.getUniformLocation(prog, "u_useDiffuse"),
-  useSpec: gl.getUniformLocation(prog, "u_useSpecular"),
-  flatShading: gl.getUniformLocation(prog, "u_flatShading"),
+const program = gl.createProgram();
+gl.attachShader(program, compile(gl.VERTEX_SHADER, vsSource));
+gl.attachShader(program, compile(gl.FRAGMENT_SHADER, fsSource));
+gl.linkProgram(program);
+if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+  const log = gl.getProgramInfoLog(program);
+  console.error("Program link error:", log);
+  throw new Error(log);
+}
+gl.useProgram(program);
+
+// ============================================================
+// 5. LOCATIONS
+// ============================================================
+const L = {
+  pos:      gl.getAttribLocation(program, "a_position"),
+  norm:     gl.getAttribLocation(program, "a_normal"),
+  uv:       gl.getAttribLocation(program, "a_texCoord"),
+  model:    gl.getUniformLocation(program, "u_model"),
+  view:     gl.getUniformLocation(program, "u_view"),
+  proj:     gl.getUniformLocation(program, "u_projection"),
+  normMat:  gl.getUniformLocation(program, "u_normalMatrix"),
+  lightPos: gl.getUniformLocation(program, "u_lightPosition"),
+  lightCol: gl.getUniformLocation(program, "u_lightColor"),
+  camPos:   gl.getUniformLocation(program, "u_cameraPosition"),
+  amb:      gl.getUniformLocation(program, "u_ambientStrength"),
+  shin:     gl.getUniformLocation(program, "u_shininess"),
+  tex:      gl.getUniformLocation(program, "u_texture"),
+  uvScale:  gl.getUniformLocation(program, "u_uvScale"),
+  useAmb:   gl.getUniformLocation(program, "u_useAmbient"),
+  useDiff:  gl.getUniformLocation(program, "u_useDiffuse"),
+  useSpec:  gl.getUniformLocation(program, "u_useSpecular"),
+  flat:     gl.getUniformLocation(program, "u_flatShading"),
 };
 
-// ==================== 6. GEOMETRY MANAGEMENT ====================
+// ============================================================
+// 6. BUFFERS
+// ============================================================
+let positionBuffer = gl.createBuffer();
+let normalBuffer   = gl.createBuffer();
+let uvBuffer       = gl.createBuffer();
 let currentGeometry = null;
-let positionBuffer, normalBuffer, uvBuffer;
 
 function updateGeometry(shapeName) {
   let geo;
   switch (shapeName) {
-    case "sphere": geo = createSphere(); break;
-    case "torus": geo = createTorus(); break;
+    case "sphere":    geo = createSphere(); break;
+    case "torus":     geo = createTorus(); break;
     case "torusKnot": geo = createTorusKnot(); break;
-    default: geo = createCube(); break;
+    default:          geo = createCube(); break;
   }
   currentGeometry = geo;
 
-  if (!positionBuffer) {
-    positionBuffer = gl.createBuffer();
-    normalBuffer = gl.createBuffer();
-    uvBuffer = gl.createBuffer();
-  }
   gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
   gl.bufferData(gl.ARRAY_BUFFER, geo.positions, gl.STATIC_DRAW);
   gl.bindBuffer(gl.ARRAY_BUFFER, normalBuffer);
@@ -265,27 +297,29 @@ function updateGeometry(shapeName) {
   gl.bufferData(gl.ARRAY_BUFFER, geo.uvs, gl.STATIC_DRAW);
 }
 
-function setupAttr(buf, location, size) {
-  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+function setupAttr(buffer, location, size) {
+  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
   gl.enableVertexAttribArray(location);
   gl.vertexAttribPointer(location, size, gl.FLOAT, false, 0, 0);
 }
 
-// ==================== 7. TEXTURES ====================
+// ============================================================
+// 7. TEXTURES
+// ============================================================
 function createCheckerTexture() {
   const size = 64, cells = 8, cellSize = size / cells;
-  const src = document.createElement("canvas");
-  src.width = src.height = size;
-  const ctx = src.getContext("2d");
+  const cvs = document.createElement("canvas");
+  cvs.width = cvs.height = size;
+  const ctx = cvs.getContext("2d");
   for (let y = 0; y < cells; y++) {
     for (let x = 0; x < cells; x++) {
       ctx.fillStyle = (x + y) % 2 === 0 ? "#f8fafc" : "#0ea5e9";
-      ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+      ctx.fillRect(x*cellSize, y*cellSize, cellSize, cellSize);
     }
   }
   const tex = gl.createTexture();
   gl.bindTexture(gl.TEXTURE_2D, tex);
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, src);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, cvs);
   gl.generateMipmap(gl.TEXTURE_2D);
   return tex;
 }
@@ -294,7 +328,7 @@ function createImageTexture() {
   const tex = gl.createTexture();
   gl.bindTexture(gl.TEXTURE_2D, tex);
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE,
-    new Uint8Array([180, 20, 20, 255]));
+    new Uint8Array([200, 30, 30, 255]));
 
   const img = new Image();
   img.crossOrigin = "anonymous";
@@ -306,23 +340,23 @@ function createImageTexture() {
     applyTextureParams(tex);
   };
   img.onerror = () => {
-    console.warn("[Texture] ./assets/texture.png tidak ditemukan → pakai fallback.");
-    const canvas = document.createElement("canvas");
-    canvas.width = canvas.height = 256;
-    const ctx = canvas.getContext("2d");
-    const grad = ctx.createLinearGradient(0, 0, 256, 256);
-    grad.addColorStop(0.00, "#ff0099");
-    grad.addColorStop(0.33, "#ffcc00");
-    grad.addColorStop(0.66, "#00ffcc");
-    grad.addColorStop(1.00, "#0066ff");
-    ctx.fillStyle = grad;
+    console.warn("[Texture] ./assets/texture.png tidak ditemukan, pakai fallback.");
+    const cvs = document.createElement("canvas");
+    cvs.width = cvs.height = 256;
+    const ctx = cvs.getContext("2d");
+    const g = ctx.createLinearGradient(0, 0, 256, 256);
+    g.addColorStop(0.00, "#ff0099");
+    g.addColorStop(0.33, "#ffcc00");
+    g.addColorStop(0.66, "#00ffcc");
+    g.addColorStop(1.00, "#0066ff");
+    ctx.fillStyle = g;
     ctx.fillRect(0, 0, 256, 256);
     ctx.strokeStyle = "rgba(0,0,0,0.5)";
     ctx.lineWidth = 2;
-    const g = 256 / 8;
+    const cell = 256 / 8;
     for (let i = 0; i <= 8; i++) {
-      ctx.beginPath(); ctx.moveTo(i*g, 0); ctx.lineTo(i*g, 256); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(0, i*g); ctx.lineTo(256, i*g); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(i*cell, 0); ctx.lineTo(i*cell, 256); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0, i*cell); ctx.lineTo(256, i*cell); ctx.stroke();
     }
     ctx.fillStyle = "#fff";
     ctx.font = "bold 22px monospace";
@@ -330,27 +364,28 @@ function createImageTexture() {
     ctx.fillText("V ↓", 10, 250);
 
     gl.bindTexture(gl.TEXTURE_2D, tex);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, canvas);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, cvs);
     gl.generateMipmap(gl.TEXTURE_2D);
     applyTextureParams(tex);
   };
   img.src = "./assets/texture.png";
-
   return tex;
 }
 
 const checkerTexture = createCheckerTexture();
-const imageTexture = createImageTexture();
+const imageTexture   = createImageTexture();
 
 gl.activeTexture(gl.TEXTURE0);
-gl.uniform1i(loc.tex, 0);
+gl.uniform1i(L.tex, 0);
 
-// ==================== 8. STATE ====================
+// ============================================================
+// 8. STATE
+// ============================================================
 const state = {
   shape: "cube",
   rotX: 20, rotY: 30,
-  scaleX: 1, scaleY: 1, scaleZ: 1,
-  shading: "FLAT",
+  scaleX: 1.0, scaleY: 1.0, scaleZ: 1.0,
+  shading: "SMOOTH",
   textureSource: "checker",
   filter: "LINEAR",
   wrap: "REPEAT",
@@ -363,7 +398,7 @@ const state = {
   isRotating: true,
   isLightOrbit: false,
   isCameraOrbit: false,
-  isNonUniformScale: false,  // [CHALLENGE D]
+  isNonUniformScale: false,
   lightPos: [2, 2, 2],
   lightColor: [1, 1, 1],
 };
@@ -375,11 +410,12 @@ const camera = {
   orbitAngle: 0,
 };
 
-// ==================== 9. TEXTURE PARAM HELPERS ====================
+// ============================================================
+// 9. TEXTURE PARAMS
+// ============================================================
 function applyTextureParams(tex) {
   if (!tex) return;
   gl.bindTexture(gl.TEXTURE_2D, tex);
-
   if (state.filter === "NEAREST") {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
@@ -390,7 +426,6 @@ function applyTextureParams(tex) {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
   }
-
   const wMode = state.wrap === "CLAMP_TO_EDGE" ? gl.CLAMP_TO_EDGE : gl.REPEAT;
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wMode);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wMode);
@@ -405,102 +440,165 @@ function getActiveTexture() {
   return state.textureSource === "image" ? imageTexture : checkerTexture;
 }
 
-// ==================== 10. UI BINDINGS ====================
+// ============================================================
+// 10. UI HELPERS
+// ============================================================
 const $ = id => document.getElementById(id);
 
-$("shapeSelect").addEventListener("change", e => {
-  state.shape = e.target.value;
-  updateGeometry(state.shape);
-});
+function on(id, event, handler) {
+  const el = $(id);
+  if (el) el.addEventListener(event, handler);
+}
 
-$("ambientSlider").addEventListener("input", e => {
+function setToggle(btnId, isActive) {
+  const btn = $(btnId);
+  if (btn) btn.classList.toggle("active", isActive);
+}
+
+// ============================================================
+// 11. UI BINDINGS — SLIDERS
+// ============================================================
+on("ambientSlider", "input", e => {
   state.ambient = parseFloat(e.target.value);
   $("ambientVal").textContent = state.ambient.toFixed(2);
 });
 
-$("shininessSlider").addEventListener("input", e => {
+on("shininessSlider", "input", e => {
   state.shininess = parseFloat(e.target.value);
   $("shininessVal").textContent = state.shininess.toFixed(0);
 });
 
-["X", "Y", "Z"].forEach(axis => {
-  $(`light${axis}`).addEventListener("input", e => {
-    const val = parseFloat(e.target.value);
-    state.lightPos[axis === "X" ? 0 : axis === "Y" ? 1 : 2] = val;
-    $(`light${axis}Val`).textContent = val.toFixed(1);
+["X","Y","Z"].forEach(axis => {
+  on("light" + axis, "input", e => {
+    const v = parseFloat(e.target.value);
+    const i = axis === "X" ? 0 : axis === "Y" ? 1 : 2;
+    state.lightPos[i] = v;
+    $("light" + axis + "Val").textContent = v.toFixed(1);
   });
 });
 
-["X", "Y", "Z"].forEach(axis => {
-  $(`scale${axis}`).addEventListener("input", e => {
-    const val = parseFloat(e.target.value);
-    state[`scale${axis}`] = val;
-    $(`scale${axis}Val`).textContent = val.toFixed(1);
+["X","Y","Z"].forEach(axis => {
+  on("scale" + axis, "input", e => {
+    const v = parseFloat(e.target.value);
+    state["scale" + axis] = v;
+    $("scale" + axis + "Val").textContent = v.toFixed(1);
   });
 });
 
-$("textureSelect").addEventListener("change", e => state.textureSource = e.target.value);
+// ============================================================
+// 12. UI BINDINGS — DROPDOWNS & CHECKBOXES
+// ============================================================
+on("shapeSelect", "change", e => {
+  state.shape = e.target.value;
+  updateGeometry(state.shape);
+});
 
-$("filterSelect").addEventListener("change", e => {
+on("textureSelect", "change", e => state.textureSource = e.target.value);
+
+on("filterSelect", "change", e => {
   state.filter = e.target.value;
   applyTextureSettings();
 });
 
-$("wrapSelect").addEventListener("change", e => {
+on("wrapSelect", "change", e => {
   state.wrap = e.target.value;
   applyTextureSettings();
 });
 
-$("chkAmbient").addEventListener("change",  e => state.useAmbient  = e.target.checked);
-$("chkDiffuse").addEventListener("change",  e => state.useDiffuse  = e.target.checked);
-$("chkSpecular").addEventListener("change", e => state.useSpecular = e.target.checked);
+on("chkAmbient",  "change", e => state.useAmbient  = e.target.checked);
+on("chkDiffuse",  "change", e => state.useDiffuse  = e.target.checked);
+on("chkSpecular", "change", e => state.useSpecular = e.target.checked);
 
-function setToggle(btnId, isActive) {
-  const btn = $(btnId);
-  if (!btn) return;
-  btn.classList.toggle("active", isActive);
-}
-
-$("btnFlatSmooth").addEventListener("click", () => {
+// ============================================================
+// 13. UI BINDINGS — BUTTONS & TOGGLES
+// ============================================================
+on("btnFlatSmooth", "click", () => {
   state.shading = state.shading === "FLAT" ? "SMOOTH" : "FLAT";
-  setToggle("btnFlatSmooth", state.shading === "SMOOTH");
+  setToggle("btnFlatSmooth", state.shading === "FLAT");
 });
 
-$("btnTexture").addEventListener("click", () => {
+on("btnTexture", "click", () => {
   $("btnTexture").classList.toggle("active");
 });
 
-$("btnLightOrbit").addEventListener("click", () => {
+on("btnLightOrbit", "click", () => {
   state.isLightOrbit = !state.isLightOrbit;
   setToggle("btnLightOrbit", state.isLightOrbit);
 });
 
-$("btnCameraOrbit").addEventListener("click", () => {
+on("btnCameraOrbit", "click", () => {
   state.isCameraOrbit = !state.isCameraOrbit;
   setToggle("btnCameraOrbit", state.isCameraOrbit);
 });
 
-$("btnStopRotation").addEventListener("click", () => {
+on("btnStopRotation", "click", () => {
   state.isRotating = !state.isRotating;
   updateRotationButton();
 });
 
-$("btnReset").addEventListener("click", resetScene);
+on("btnReset", "click", resetScene);
 
+// ---- CHALLENGE B ----
+function stepAmbient(delta) {
+  state.ambient = Math.max(0, Math.min(1, state.ambient + delta));
+  const slider = $("ambientSlider");
+  if (slider) slider.value = state.ambient;
+  $("ambientVal").textContent = state.ambient.toFixed(2);
+}
+on("btnAmbientDown", "click", () => stepAmbient(-0.05));
+on("btnAmbientUp",   "click", () => stepAmbient(+0.05));
+
+// ---- CHALLENGE C ----
+function stepCameraX(delta) {
+  if (state.isCameraOrbit) return;
+  camera.pos[0] = Math.max(-6, Math.min(6, camera.pos[0] + delta));
+}
+on("btnCamLeft",  "click", () => stepCameraX(-0.4));
+on("btnCamRight", "click", () => stepCameraX(+0.4));
+
+// ---- CHALLENGE D ----
+function toggleNonUniformScale() {
+  state.isNonUniformScale = !state.isNonUniformScale;
+  if (state.isNonUniformScale) {
+    state.scaleX = 1.8; state.scaleY = 0.6; state.scaleZ = 1.0;
+  } else {
+    state.scaleX = 1.0; state.scaleY = 1.0; state.scaleZ = 1.0;
+  }
+  ["X","Y","Z"].forEach(axis => {
+    const key = "scale" + axis;
+    const slider = $(key);
+    const label  = $(key + "Val");
+    if (slider) slider.value = state[key];
+    if (label)  label.textContent = state[key].toFixed(1);
+  });
+  setToggle("btnNonUniform", state.isNonUniformScale);
+}
+on("btnNonUniform", "click", toggleNonUniformScale);
+
+// ============================================================
+// 14. ROTATION BUTTON UPDATE
+// ============================================================
 function updateRotationButton() {
   const btn = $("btnStopRotation");
+  if (!btn) return;
   const label = btn.querySelector(".btn-label");
-  if (label) label.textContent = state.isRotating ? "Stop Object Rotation (P)" : "Start Object Rotation (P)";
+  if (label) {
+    label.textContent = state.isRotating ? "Stop Rotation (P)" : "Start Rotation (P)";
+  }
   setToggle("btnStopRotation", state.isRotating);
 }
 
-// ==================== 11. KEYBOARD ====================
+// ============================================================
+// 15. KEYBOARD
+// ============================================================
 const keys = {};
 window.addEventListener("keydown", e => {
   keys[e.key.toLowerCase()] = true;
   if (e.key.startsWith("Arrow")) e.preventDefault();
 });
-window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
+window.addEventListener("keyup", e => {
+  keys[e.key.toLowerCase()] = false;
+});
 
 window.addEventListener("keydown", e => {
   const k = e.key.toLowerCase();
@@ -508,239 +606,244 @@ window.addEventListener("keydown", e => {
 
   if (k === "f") {
     state.shading = state.shading === "FLAT" ? "SMOOTH" : "FLAT";
-    setToggle("btnFlatSmooth", state.shading === "SMOOTH");
-  }
-  if (k === "t") {
-    $("btnTexture").classList.toggle("active");
-  }
-  if (k === "g") {
+    setToggle("btnFlatSmooth", state.shading === "FLAT");
+  } else if (k === "t") {
+    const b = $("btnTexture");
+    if (b) b.classList.toggle("active");
+  } else if (k === "g") {
     state.wrap = state.wrap === "REPEAT" ? "CLAMP_TO_EDGE" : "REPEAT";
-    $("wrapSelect").value = state.wrap;
+    const s = $("wrapSelect"); if (s) s.value = state.wrap;
     applyTextureSettings();
-  }
-  if (k === "r") resetScene();
-  if (k === "l") {
+  } else if (k === "r") {
+    resetScene();
+  } else if (k === "l") {
     state.isLightOrbit = !state.isLightOrbit;
     setToggle("btnLightOrbit", state.isLightOrbit);
-  }
-  if (k === "p") {
+  } else if (k === "p") {
     state.isRotating = !state.isRotating;
     updateRotationButton();
-  }
-
-  // [CHALLENGE D] N — toggle non-uniform scale
-  if (k === "n") {
-    state.isNonUniformScale = !state.isNonUniformScale;
-    if (state.isNonUniformScale) {
-      state.scaleX = 1.8; state.scaleY = 0.6; state.scaleZ = 1.0;
-    } else {
-      state.scaleX = 1.0; state.scaleY = 1.0; state.scaleZ = 1.0;
-    }
-    // sinkronkan ke slider
-    $("scaleX").value = state.scaleX; $("scaleXVal").textContent = state.scaleX.toFixed(1);
-    $("scaleY").value = state.scaleY; $("scaleYVal").textContent = state.scaleY.toFixed(1);
-    $("scaleZ").value = state.scaleZ; $("scaleZVal").textContent = state.scaleZ.toFixed(1);
+  } else if (k === "a") {
+    stepAmbient(-0.05);
+  } else if (k === "z") {
+    stepAmbient(+0.05);
+  } else if (k === "q") {
+    stepCameraX(-0.4);
+  } else if (k === "e") {
+    stepCameraX(+0.4);
+  } else if (k === "n") {
+    toggleNonUniformScale();
   }
 });
 
-// ==================== 12. RESET ====================
+// ============================================================
+// 16. RESET
+// ============================================================
 function resetScene() {
   state.lightPos = [2, 2, 2];
   state.shininess = 32.0;
   state.uvScale = 1.0;
-  state.shading = "FLAT";
+  state.shading = "SMOOTH";
   state.filter = "LINEAR";
   state.wrap = "REPEAT";
   state.textureSource = "checker";
   state.scaleX = 1.0; state.scaleY = 1.0; state.scaleZ = 1.0;
-  state.useAmbient = state.useDiffuse = state.useSpecular = true;
+  state.useAmbient = true; state.useDiffuse = true; state.useSpecular = true;
   state.isRotating = true;
   state.isLightOrbit = false;
   state.isCameraOrbit = false;
   state.isNonUniformScale = false;
-
-  // reset camera juga
+  state.ambient = 0.18;
   camera.pos = [0, 1.4, 4.0];
   camera.orbitAngle = 0;
 
-  $("lightX").value = 2; $("lightXVal").textContent = "2.0";
-  $("lightY").value = 2; $("lightYVal").textContent = "2.0";
-  $("lightZ").value = 2; $("lightZVal").textContent = "2.0";
-  $("shininessSlider").value = 32; $("shininessVal").textContent = "32";
-  $("ambientSlider").value = 0.18; $("ambientVal").textContent = "0.18";
-  $("scaleX").value = 1; $("scaleXVal").textContent = "1.0";
-  $("scaleY").value = 1; $("scaleYVal").textContent = "1.0";
-  $("scaleZ").value = 1; $("scaleZVal").textContent = "1.0";
-  $("chkAmbient").checked = true;
-  $("chkDiffuse").checked = true;
-  $("chkSpecular").checked = true;
-  $("filterSelect").value = "LINEAR";
-  $("wrapSelect").value = "REPEAT";
-  $("textureSelect").value = "checker";
-  $("shapeSelect").value = "cube";
+  const set = (id, val) => { const el = $(id); if (el) el.value = val; };
+  const txt = (id, val) => { const el = $(id); if (el) el.textContent = val; };
+
+  set("lightX", 2);  txt("lightXVal", "2.0");
+  set("lightY", 2);  txt("lightYVal", "2.0");
+  set("lightZ", 2);  txt("lightZVal", "2.0");
+  set("shininessSlider", 32); txt("shininessVal", "32");
+  set("ambientSlider", 0.18); txt("ambientVal", "0.18");
+  set("scaleX", 1); txt("scaleXVal", "1.0");
+  set("scaleY", 1); txt("scaleYVal", "1.0");
+  set("scaleZ", 1); txt("scaleZVal", "1.0");
+  set("filterSelect", "LINEAR");
+  set("wrapSelect", "REPEAT");
+  set("textureSelect", "checker");
+  set("shapeSelect", "cube");
+
+  const chk = (id, v) => { const el = $(id); if (el) el.checked = v; };
+  chk("chkAmbient", true);
+  chk("chkDiffuse", true);
+  chk("chkSpecular", true);
+
   state.shape = "cube";
   updateGeometry("cube");
 
-  setToggle("btnFlatSmooth", false);
+  setToggle("btnFlatSmooth", true); // SMOOTH is default
   setToggle("btnTexture", false);
   setToggle("btnLightOrbit", false);
   setToggle("btnCameraOrbit", false);
+  setToggle("btnNonUniform", false);
   updateRotationButton();
 
   applyTextureSettings();
 }
 
-// ==================== 13. UPDATE ====================
+// ============================================================
+// 17. UPDATE
+// ============================================================
 function update(dt) {
   if (state.isRotating) {
     state.rotX += 20.0 * dt;
     state.rotY += 35.0 * dt;
   }
 
-  // ---- Light Orbit [CHALLENGE E] ----
   if (state.isLightOrbit) {
     const t = performance.now() * 0.001;
     state.lightPos[0] = Math.cos(t) * 3.0;
     state.lightPos[2] = Math.sin(t) * 3.0;
-    $("lightX").value = state.lightPos[0];
-    $("lightXVal").textContent = state.lightPos[0].toFixed(1);
-    $("lightZ").value = state.lightPos[2];
-    $("lightZVal").textContent = state.lightPos[2].toFixed(1);
+    const lx = $("lightX"); const lz = $("lightZ");
+    if (lx) lx.value = state.lightPos[0];
+    if (lz) lz.value = state.lightPos[2];
+    txt("lightXVal", state.lightPos[0].toFixed(1));
+    txt("lightZVal", state.lightPos[2].toFixed(1));
   }
 
-  // ---- Camera Orbit (auto) ----
   if (state.isCameraOrbit) {
     camera.orbitAngle += 0.5 * dt;
     camera.pos[0] = Math.cos(camera.orbitAngle) * 4.0;
     camera.pos[2] = Math.sin(camera.orbitAngle) * 4.0;
   }
 
-  // ---- [CHALLENGE C] Camera Control manual via Q / E ----
-  const camSpeed = 2.0;
-  if (!state.isCameraOrbit) {
-    if (keys["q"]) {
-      camera.pos[0] -= camSpeed * dt;
-    }
-    if (keys["e"]) {
-      camera.pos[0] += camSpeed * dt;
-    }
-    // clamp biar tidak terlalu jauh
-    camera.pos[0] = Math.max(-6, Math.min(6, camera.pos[0]));
-  }
-
-  // ---- [CHALLENGE B] Ambient Control manual via A / Z ----
-  const ambSpeed = 0.5;
-  if (keys["a"]) {
-    state.ambient = Math.max(0, state.ambient - ambSpeed * dt);
-    $("ambientSlider").value = state.ambient;
-    $("ambientVal").textContent = state.ambient.toFixed(2);
-  }
-  if (keys["z"]) {
-    state.ambient = Math.min(1, state.ambient + ambSpeed * dt);
-    $("ambientSlider").value = state.ambient;
-    $("ambientVal").textContent = state.ambient.toFixed(2);
-  }
-
-  // ---- Keyboard Light control (manual) ----
   const speed = 2.0;
   if (!state.isLightOrbit) {
-    if (keys["arrowleft"])  { state.lightPos[0] -= speed * dt; $("lightX").value = state.lightPos[0]; $("lightXVal").textContent = state.lightPos[0].toFixed(1); }
-    if (keys["arrowright"]) { state.lightPos[0] += speed * dt; $("lightX").value = state.lightPos[0]; $("lightXVal").textContent = state.lightPos[0].toFixed(1); }
-    if (keys["arrowup"])    { state.lightPos[1] += speed * dt; $("lightY").value = state.lightPos[1]; $("lightYVal").textContent = state.lightPos[1].toFixed(1); }
-    if (keys["arrowdown"])  { state.lightPos[1] -= speed * dt; $("lightY").value = state.lightPos[1]; $("lightYVal").textContent = state.lightPos[1].toFixed(1); }
-    if (keys["w"])          { state.lightPos[2] -= speed * dt; $("lightZ").value = state.lightPos[2]; $("lightZVal").textContent = state.lightPos[2].toFixed(1); }
-    if (keys["s"])          { state.lightPos[2] += speed * dt; $("lightZ").value = state.lightPos[2]; $("lightZVal").textContent = state.lightPos[2].toFixed(1); }
+    if (keys["arrowleft"])  { state.lightPos[0] -= speed * dt; syncLight(0); }
+    if (keys["arrowright"]) { state.lightPos[0] += speed * dt; syncLight(0); }
+    if (keys["arrowup"])    { state.lightPos[1] += speed * dt; syncLight(1); }
+    if (keys["arrowdown"])  { state.lightPos[1] -= speed * dt; syncLight(1); }
+    if (keys["w"])          { state.lightPos[2] -= speed * dt; syncLight(2); }
+    if (keys["s"])          { state.lightPos[2] += speed * dt; syncLight(2); }
   }
 
   if (keys["["]) state.uvScale = Math.max(0.25, state.uvScale - 1.5 * dt);
   if (keys["]"]) state.uvScale = Math.min(5.0, state.uvScale + 1.5 * dt);
-
   if (keys["-"] || keys["_"]) state.shininess = Math.max(2, state.shininess - 50 * dt);
   if (keys["+"] || keys["="]) state.shininess = Math.min(128, state.shininess + 50 * dt);
 }
 
-// ==================== 14. DRAW ====================
+function syncLight(i) {
+  const axis = ["X","Y","Z"][i];
+  const slider = $("light" + axis);
+  if (slider) slider.value = state.lightPos[i];
+  txt("light" + axis + "Val", state.lightPos[i].toFixed(1));
+}
+
+function txt(id, val) {
+  const el = $(id);
+  if (el) el.textContent = val;
+}
+
+// ============================================================
+// 18. DRAW
+// ============================================================
 function draw() {
   gl.viewport(0, 0, canvas.width, canvas.height);
   gl.clearColor(0, 0, 0, 1.0);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-  gl.useProgram(prog);
+  gl.useProgram(program);
 
   if (!currentGeometry) updateGeometry(state.shape);
 
-  setupAttr(positionBuffer, loc.pos, 3);
-  setupAttr(uvBuffer, loc.uv, 2);
-  setupAttr(normalBuffer, loc.norm, 3);
+  setupAttr(positionBuffer, L.pos, 3);
+  setupAttr(uvBuffer,       L.uv,  2);
+  setupAttr(normalBuffer,   L.norm, 3);
 
   const rx = Mat4.rotationX(degToRad(state.rotX));
   const ry = Mat4.rotationY(degToRad(state.rotY));
-  const s  = Mat4.scaling(state.scaleX, state.scaleY, state.scaleZ);
+  const sc = Mat4.scaling(state.scaleX, state.scaleY, state.scaleZ);
+
   let model = Mat4.identity();
-  model = Mat4.multiply(model, s);
+  model = Mat4.multiply(model, sc);
   model = Mat4.multiply(model, rx);
   model = Mat4.multiply(model, ry);
 
   const view = Mat4.lookAt(camera.pos, camera.target, camera.up);
   const proj = Mat4.perspective(degToRad(60), canvas.width / canvas.height, 0.1, 100.0);
-  const normMat = normalMatrixFromMat4(model);
+  const nm   = normalMatrixFromMat4(model);
 
-  gl.uniformMatrix4fv(loc.model, false, model);
-  gl.uniformMatrix4fv(loc.view, false, view);
-  gl.uniformMatrix4fv(loc.proj, false, proj);
-  gl.uniformMatrix3fv(loc.normMat, false, normMat);
-  gl.uniform3fv(loc.lightPos, state.lightPos);
-  gl.uniform3fv(loc.lightCol, state.lightColor);
-  gl.uniform3fv(loc.camPos, camera.pos);
-  gl.uniform1f(loc.amb, state.ambient);
-  gl.uniform1f(loc.shin, state.shininess);
-  gl.uniform1f(loc.uvScale, state.uvScale);
-  gl.uniform1f(loc.useAmb, state.useAmbient ? 1.0 : 0.0);
-  gl.uniform1f(loc.useDiff, state.useDiffuse ? 1.0 : 0.0);
-  gl.uniform1f(loc.useSpec, state.useSpecular ? 1.0 : 0.0);
-  gl.uniform1f(loc.flatShading, state.shading === "FLAT" ? 1.0 : 0.0);
+  gl.uniformMatrix4fv(L.model, false, model);
+  gl.uniformMatrix4fv(L.view, false, view);
+  gl.uniformMatrix4fv(L.proj, false, proj);
+  gl.uniformMatrix3fv(L.normMat, false, nm);
+  gl.uniform3fv(L.lightPos, state.lightPos);
+  gl.uniform3fv(L.lightCol, state.lightColor);
+  gl.uniform3fv(L.camPos, camera.pos);
+  gl.uniform1f(L.amb, state.ambient);
+  gl.uniform1f(L.shin, state.shininess);
+  gl.uniform1f(L.uvScale, state.uvScale);
+  gl.uniform1f(L.useAmb, state.useAmbient ? 1.0 : 0.0);
+  gl.uniform1f(L.useDiff, state.useDiffuse ? 1.0 : 0.0);
+  gl.uniform1f(L.useSpec, state.useSpecular ? 1.0 : 0.0);
+  gl.uniform1f(L.flat, state.shading === "FLAT" ? 1.0 : 0.0);
 
   gl.activeTexture(gl.TEXTURE0);
   gl.bindTexture(gl.TEXTURE_2D, getActiveTexture());
-  gl.uniform1i(loc.tex, 0);
+  gl.uniform1i(L.tex, 0);
 
   gl.drawArrays(gl.TRIANGLES, 0, currentGeometry.vertexCount);
 }
 
-// ==================== 15. HUD ====================
+// ============================================================
+// 19. HUD
+// ============================================================
 function updateHUD() {
-  $("hudShading").textContent   = state.shading;
-  $("hudFiltering").textContent = state.filter;
-  $("hudWrapping").textContent  = state.wrap;
-  $("hudLight").textContent     = `(${state.lightPos[0].toFixed(2)}, ${state.lightPos[1].toFixed(2)}, ${state.lightPos[2].toFixed(2)})`;
-  $("hudTexture").textContent   = state.textureSource === "image" ? "IMAGE" : "CHECKER";
-  $("hudCamera").textContent    = state.isCameraOrbit ? "ORBIT ON" : "ORBIT OFF";
+  txt("hudShading", state.shading);
+  txt("hudFiltering", state.filter);
+  txt("hudWrapping", state.wrap);
+  txt("hudLight", `(${state.lightPos[0].toFixed(2)}, ${state.lightPos[1].toFixed(2)}, ${state.lightPos[2].toFixed(2)})`);
+  txt("hudTexture", state.textureSource === "image" ? "IMAGE" : "CHECKER");
+  txt("hudCamera", state.isCameraOrbit ? "ORBIT ON" : "ORBIT OFF");
 
   const badge = $("statusBadge");
-  if (state.isRotating || state.isLightOrbit || state.isCameraOrbit) {
-    badge.textContent = "● RUNNING";
-    badge.style.opacity = "1";
-  } else {
-    badge.textContent = "● PAUSED";
-    badge.style.opacity = "0.6";
+  if (badge) {
+    if (state.isRotating || state.isLightOrbit || state.isCameraOrbit) {
+      badge.textContent = "● RUNNING";
+      badge.style.opacity = "1";
+    } else {
+      badge.textContent = "● PAUSED";
+      badge.style.opacity = "0.6";
+    }
   }
 }
 
-// ==================== 16. MAIN LOOP ====================
+// ============================================================
+// 20. MAIN LOOP
+// ============================================================
 let lastTime = 0;
 function render(time) {
   let dt = (time - lastTime) * 0.001;
   lastTime = time;
   dt = Math.min(dt, 0.05);
 
-  update(dt);
-  draw();
-  updateHUD();
+  try {
+    update(dt);
+    draw();
+    updateHUD();
+  } catch (e) {
+    console.error("Render error:", e);
+  }
 
   requestAnimationFrame(render);
 }
 
-// ==================== 17. INIT ====================
+// ============================================================
+// 21. INIT
+// ============================================================
 updateGeometry("cube");
 applyTextureSettings();
+setToggle("btnFlatSmooth", true); // default SMOOTH
 updateRotationButton();
 requestAnimationFrame(render);
+
+console.log("✓ Aplikasi berjalan. Shape: cube, Shading: SMOOTH");
