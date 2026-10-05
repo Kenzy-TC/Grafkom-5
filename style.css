@@ -239,7 +239,17 @@ button:hover {
   box-shadow: 0 0 12px var(--glow);
 }
 
-button:active { transform: translateY(1px); }
+button {
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+button:active {
+  transform: translateY(1px) scale(0.97);
+  background: var(--neon) !important;
+  color: #000 !important;
+  box-shadow: 0 0 16px var(--glow-strong), 0 0 32px var(--glow) !important;
+}
 
 .btn-primary {
   background: linear-gradient(135deg, var(--neon) 0%, #b6c400 100%);
