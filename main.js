@@ -545,16 +545,49 @@ function stepAmbient(delta) {
   if (slider) slider.value = state.ambient;
   $("ambientVal").textContent = state.ambient.toFixed(2);
 }
-on("btnAmbientDown", "click", () => stepAmbient(-0.05));
-on("btnAmbientUp",   "click", () => stepAmbient(+0.05));
 
 // ---- CHALLENGE C ----
 function stepCameraX(delta) {
   if (state.isCameraOrbit) return;
   camera.pos[0] = Math.max(-6, Math.min(6, camera.pos[0] + delta));
 }
-on("btnCamLeft",  "click", () => stepCameraX(-0.4));
-on("btnCamRight", "click", () => stepCameraX(+0.4));
+
+// ---- HOLD-TO-REPEAT HELPER ----
+// Klik sekali = 1 langkah. Tahan = trigger berulang tiap `intervalMs`.
+function holdable(id, action, intervalMs = 50) {
+  const el = $(id);
+  if (!el) return;
+
+  let intervalId = null;
+  let timeoutId = null;
+
+  const start = (e) => {
+    e.preventDefault();
+    action(); // langsung 1x saat baru ditekan
+
+    // setelah 300ms, mulai repeat cepat
+    timeoutId = setTimeout(() => {
+      intervalId = setInterval(action, intervalMs);
+    }, 300);
+  };
+
+  const stop = () => {
+    if (timeoutId) { clearTimeout(timeoutId); timeoutId = null; }
+    if (intervalId) { clearInterval(intervalId); intervalId = null; }
+  };
+
+  el.addEventListener("pointerdown", start);
+  el.addEventListener("pointerup", stop);
+  el.addEventListener("pointerleave", stop);
+  el.addEventListener("pointercancel", stop);
+  window.addEventListener("blur", stop);
+}
+
+// Pasang ke 4 tombol
+holdable("btnAmbientDown", () => stepAmbient(-0.02), 40);
+holdable("btnAmbientUp",   () => stepAmbient(+0.02), 40);
+holdable("btnCamLeft",     () => stepCameraX(-0.05), 25);
+holdable("btnCamRight",    () => stepCameraX(+0.05), 25);
 
 // ---- CHALLENGE D ----
 function toggleNonUniformScale() {
@@ -608,12 +641,11 @@ window.addEventListener("keydown", e => {
     state.shading = state.shading === "FLAT" ? "SMOOTH" : "FLAT";
     setToggle("btnFlatSmooth", state.shading === "FLAT");
   } else if (k === "t") {
-    const b = $("btnTexture");
-    if (b) b.classList.toggle("active");
+    $("btnTexture")?.classList.toggle("active");
   } else if (k === "g") {
     state.wrap = state.wrap === "REPEAT" ? "CLAMP_TO_EDGE" : "REPEAT";
     const s = $("wrapSelect"); if (s) s.value = state.wrap;
-    applyTextureSettings();
+    applyTexSettings();
   } else if (k === "r") {
     resetScene();
   } else if (k === "l") {
@@ -621,17 +653,9 @@ window.addEventListener("keydown", e => {
     setToggle("btnLightOrbit", state.isLightOrbit);
   } else if (k === "p") {
     state.isRotating = !state.isRotating;
-    updateRotationButton();
-  } else if (k === "a") {
-    stepAmbient(-0.05);
-  } else if (k === "z") {
-    stepAmbient(+0.05);
-  } else if (k === "q") {
-    stepCameraX(-0.4);
-  } else if (k === "e") {
-    stepCameraX(+0.4);
+    updateRotBtn();
   } else if (k === "n") {
-    toggleNonUniformScale();
+    toggleNonUniform();
   }
 });
 
@@ -695,8 +719,13 @@ function resetScene() {
 // ============================================================
 function update(dt) {
   if (state.isRotating) {
-    state.rotX += 20.0 * dt;
-    state.rotY += 35.0 * dt;
+  const ambKeySpeed = 0.5;   // per detik
+  const camKeySpeed = 3.0;   // per detik
+
+  if (keys["a"]) stepAmbient(-ambKeySpeed * dt);
+  if (keys["z"]) stepAmbient(+ambKeySpeed * dt);
+  if (keys["q"]) stepCameraX(-camKeySpeed * dt);
+  if (keys["e"]) stepCameraX(+camKeySpeed * dt);
   }
 
   if (state.isLightOrbit) {
