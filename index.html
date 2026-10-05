@@ -3,714 +3,174 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Textured & Lit Object Playground</title>
+  <title>Neon Object Playground — Lighting, Shading & Texture</title>
   <link rel="stylesheet" href="./style.css" />
 </head>
-
 <body>
-
-  <aside class="sidebar">
-    <h2>Modul Praktikum</h2>
-
-    <nav class="nav-list" aria-label="Navigasi modul">
-      <a href="#" class="nav-item">Beranda Portal</a>
-      <a href="#" class="nav-item">WebGL Primitives</a>
-      <a href="#" class="nav-item">3D Camera & Projection</a>
-      <a href="#" class="nav-item active">Lighting & Texture</a>
-    </nav>
-
-    <div class="sidebar-note">
-      <span class="note-dot"></span>
-      <p>
-        Eksperimen interaktif<br>
-        WebGL 2.0
-      </p>
-    </div>
-  </aside>
-
-  <main class="main-content">
-
-    <div class="content-wrapper">
-
-      <!-- ================= HEADER ================= -->
-      <header>
-        <div class="dept-badge">
-          Teknik Informatika / Week 05
-        </div>
-
-        <h1>
-          Lighting &amp; Texture <span>Playground</span>
-        </h1>
-
-        <p>
-          WebGL2 — Lighting, Shading, Texture Mapping &amp; Normal Matrix.
-        </p>
-      </header>
-
-
-      <!-- ================= TEAM ================= -->
-      <section class="team-container" aria-label="Informasi praktikum">
-
-        <article class="team-card">
-          <div class="avatar">MN</div>
-
-          <div class="team-info">
-            <span class="name">Mario Napitupulu</span>
-            <span class="nim">5025241085</span>
-          </div>
-        </article>
-
-        <article class="team-card">
-          <div class="avatar">NY</div>
-
-          <div class="team-info">
-            <span class="name">Nathanael Oliver A. Y.</span>
-            <span class="nim">5025241109</span>
-          </div>
-        </article>
-
-      </section>
-
-
-      <!-- ================================================= -->
-      <!-- ================= CONTROLS ====================== -->
-      <!-- ================================================= -->
-
-      <section class="controls-bar" aria-label="Kontrol playground">
-
-        <!-- Bentuk Objek -->
-        <div class="control-group">
-          <label for="shapeSelect">
-            Bentuk Objek
-          </label>
-
-          <select id="shapeSelect">
-            <option value="cube">Kubus</option>
-            <option value="sphere">Bola</option>
-            <option value="torus">Torus</option>
-            <option value="torusKnot">Torus Knot</option>
-          </select>
-        </div>
-
-
-        <!-- Texture Source -->
-        <div class="control-group">
-          <label for="textureSelect">
-            Texture Source
-          </label>
-
-          <select id="textureSelect">
-            <option value="checker">Checkerboard</option>
-            <option value="image">Image Texture</option>
-          </select>
-        </div>
-
-
-        <!-- Filtering -->
-        <div class="control-group">
-          <label for="filterSelect">
-            Filtering
-          </label>
-
-          <select id="filterSelect">
-            <option value="LINEAR">LINEAR</option>
-            <option value="NEAREST">NEAREST</option>
-            <option value="LINEAR_MIPMAP">LINEAR_MIPMAP</option>
-          </select>
-        </div>
-
-
-        <!-- Wrapping -->
-        <div class="control-group">
-          <label for="wrapSelect">
-            Wrapping
-          </label>
-
-          <select id="wrapSelect">
-            <option value="REPEAT">REPEAT</option>
-            <option value="CLAMP_TO_EDGE">CLAMP_TO_EDGE</option>
-          </select>
-        </div>
-
-
-        <!-- Ambient Strength -->
-        <div class="control-group">
-
-          <div class="range-heading">
-            <label for="ambientSlider">
-              Ambient Strength
-            </label>
-
-            <output
-              class="slider-val"
-              id="ambientVal"
-            >
-              0.18
-            </output>
-          </div>
-
-          <input
-            type="range"
-            id="ambientSlider"
-            min="0"
-            max="1"
-            step="0.01"
-            value="0.18"
-          />
-
-        </div>
-
-
-        <!-- Shininess -->
-        <div class="control-group">
-
-          <div class="range-heading">
-            <label for="shininessSlider">
-              Shininess
-            </label>
-
-            <output
-              class="slider-val"
-              id="shininessVal"
-            >
-              32
-            </output>
-          </div>
-
-          <input
-            type="range"
-            id="shininessSlider"
-            min="2"
-            max="128"
-            step="1"
-            value="32"
-          />
-
-        </div>
-
-
-        <!-- Light X -->
-        <div class="control-group">
-
-          <div class="range-heading">
-            <label for="lightX">
-              Light X
-            </label>
-
-            <output
-              class="slider-val"
-              id="lightXVal"
-            >
-              2.0
-            </output>
-          </div>
-
-          <input
-            type="range"
-            id="lightX"
-            min="-5"
-            max="5"
-            step="0.1"
-            value="2"
-          />
-
-        </div>
-
-
-        <!-- Light Y -->
-        <div class="control-group">
-
-          <div class="range-heading">
-            <label for="lightY">
-              Light Y
-            </label>
-
-            <output
-              class="slider-val"
-              id="lightYVal"
-            >
-              2.0
-            </output>
-          </div>
-
-          <input
-            type="range"
-            id="lightY"
-            min="-5"
-            max="5"
-            step="0.1"
-            value="2"
-          />
-
-        </div>
-
-
-        <!-- Light Z -->
-        <div class="control-group">
-
-          <div class="range-heading">
-            <label for="lightZ">
-              Light Z
-            </label>
-
-            <output
-              class="slider-val"
-              id="lightZVal"
-            >
-              2.0
-            </output>
-          </div>
-
-          <input
-            type="range"
-            id="lightZ"
-            min="-5"
-            max="5"
-            step="0.1"
-            value="2"
-          />
-
-        </div>
-
-
-        <!-- Scale X -->
-        <div class="control-group">
-
-          <div class="range-heading">
-            <label for="scaleX">
-              Scale X
-            </label>
-
-            <output
-              class="slider-val"
-              id="scaleXVal"
-            >
-              1.0
-            </output>
-          </div>
-
-          <input
-            type="range"
-            id="scaleX"
-            min="0.2"
-            max="2.0"
-            step="0.1"
-            value="1.0"
-          />
-
-        </div>
-
-
-        <!-- Scale Y -->
-        <div class="control-group">
-
-          <div class="range-heading">
-            <label for="scaleY">
-              Scale Y
-            </label>
-
-            <output
-              class="slider-val"
-              id="scaleYVal"
-            >
-              1.0
-            </output>
-          </div>
-
-          <input
-            type="range"
-            id="scaleY"
-            min="0.2"
-            max="2.0"
-            step="0.1"
-            value="1.0"
-          />
-
-        </div>
-
-
-        <!-- Scale Z -->
-        <div class="control-group">
-
-          <div class="range-heading">
-            <label for="scaleZ">
-              Scale Z
-            </label>
-
-            <output
-              class="slider-val"
-              id="scaleZVal"
-            >
-              1.0
-            </output>
-          </div>
-
-          <input
-            type="range"
-            id="scaleZ"
-            min="0.2"
-            max="2.0"
-            step="0.1"
-            value="1.0"
-          />
-
-        </div>
-
-
-        <!-- Lighting Components -->
-        <div class="control-group wide">
-
-          <label>
-            Lighting Components
-          </label>
-
-          <div class="checkbox-group">
-
-            <label>
-              <input
-                type="checkbox"
-                id="chkAmbient"
-                checked
-              />
-              Ambient
-            </label>
-
-            <label>
-              <input
-                type="checkbox"
-                id="chkDiffuse"
-                checked
-              />
-              Diffuse
-            </label>
-
-            <label>
-              <input
-                type="checkbox"
-                id="chkSpecular"
-                checked
-              />
-              Specular
-            </label>
-
-          </div>
-
-        </div>
-
-
-        <!-- Action Buttons -->
-        <div class="control-group action-controls">
-
-          <!-- Flat / Smooth -->
-          <button
-            id="btnFlatSmooth"
-            class="btn toggle-btn"
-            type="button"
-          >
-            Flat / Smooth
-            <kbd>F</kbd>
-            <span class="indicator"></span>
-          </button>
-
-
-          <!-- Texture -->
-          <button
-            id="btnTexture"
-            class="btn toggle-btn"
-            type="button"
-          >
-            Texture
-            <kbd>T</kbd>
-            <span class="indicator"></span>
-          </button>
-
-
-          <!-- Light Orbit -->
-          <button
-            id="btnLightOrbit"
-            class="btn toggle-btn"
-            type="button"
-          >
-            Light Orbit
-            <kbd>L</kbd>
-            <span class="indicator"></span>
-          </button>
-
-
-          <!-- Camera Orbit -->
-          <button
-            id="btnCameraOrbit"
-            class="btn toggle-btn"
-            type="button"
-          >
-            Camera Orbit
-            <span class="indicator"></span>
-          </button>
-
-
-          <!-- Stop / Start Object Rotation -->
-          <button
-            id="btnStopRotation"
-            class="btn primary toggle-btn"
-            type="button"
-          >
-            <span class="btn-label">
-              Stop Object Rotation
-              <kbd>P</kbd>
-            </span>
-
-            <span class="indicator"></span>
-          </button>
-
-
-          <!-- Reset -->
-          <button
-            id="btnReset"
-            class="btn btn-danger"
-            type="button"
-          >
-            Reset Scene
-            <kbd>R</kbd>
-          </button>
-
-        </div>
-
-      </section>
-
-
-      <!-- ================================================= -->
-      <!-- ================= CANVAS ======================== -->
-      <!-- ================================================= -->
-
-      <section class="canvas-section">
-
-        <div class="canvas-heading">
-
-          <div>
-            <span class="section-kicker">
-              LIVE RENDER
-            </span>
-
-            <h2>
-              WebGL Canvas
-            </h2>
-          </div>
-
-          <span
-            id="statusBadge"
-            class="status status-badge"
-          >
-            ● RUNNING
-          </span>
-
-        </div>
-
-
-        <div class="canvas-wrapper">
-
-          <div class="canvas-frame">
-
-            <canvas
-              id="glCanvas"
-              width="1100"
-              height="650"
-            ></canvas>
-
-            <div class="corner top-left">
-              NORMAL MATRIX
-            </div>
-
-            <div class="corner top-right">
-              PHONG MODEL
-            </div>
-
-            <div class="corner bottom-left">
-              UV MAPPING
-            </div>
-
-            <div class="corner bottom-right">
-              FRAGMENT SHADER
-            </div>
-
-          </div>
-
-        </div>
-
-
-        <!-- Canvas Legend -->
-        <div class="legend">
-
-          <span>
-            <i class="dot blue"></i>
-            Objek
-          </span>
-
-          <span>
-            <i class="dot orange"></i>
-            Sumber Cahaya
-          </span>
-
-          <span>
-            <i class="dot purple"></i>
-            Texture
-          </span>
-
-          <span>
-            <i class="dot green"></i>
-            Shading
-          </span>
-
-        </div>
-
-      </section>
-
-
-      <!-- ================================================= -->
-      <!-- ================= HUD ============================ -->
-      <!-- ================================================= -->
-
-      <section
-        class="hud-grid"
-        aria-label="Status render"
-      >
-
-        <!-- Shading -->
-        <div class="hud-card">
-          <span>Shading</span>
-          <strong id="hudShading">
-            FLAT
-          </strong>
-        </div>
-
-
-        <!-- Filtering -->
-        <div class="hud-card">
-          <span>Filtering</span>
-          <strong id="hudFiltering">
-            LINEAR
-          </strong>
-        </div>
-
-
-        <!-- Light -->
-        <div class="hud-card">
-          <span>Light</span>
-          <strong id="hudLight">
-            (2.00, 2.00, 2.00)
-          </strong>
-        </div>
-
-
-        <!-- Wrapping -->
-        <div class="hud-card">
-          <span>Wrapping</span>
-          <strong id="hudWrapping">
-            REPEAT
-          </strong>
-        </div>
-
-
-        <!-- Texture -->
-        <div class="hud-card">
-          <span>Texture</span>
-          <strong id="hudTexture">
-            CHECKER
-          </strong>
-        </div>
-
-
-        <!-- Camera -->
-        <div class="hud-card">
-          <span>Camera</span>
-          <strong id="hudCamera">
-            ORBIT OFF
-          </strong>
-        </div>
-
-
-        <!-- Renderer -->
-        <div class="hud-card">
-          <span>Renderer</span>
-          <strong>
-            WebGL2 API
-          </strong>
-        </div>
-
-
-        <!-- Status -->
-        <div class="hud-card">
-          <span>Status</span>
-          <strong>
-            Active
-          </strong>
-        </div>
-
-      </section>
-
-      <section class="report-section">
-
-        <div class="section-header">
-
-          <h4>
-            Petunjuk Interaksi
-          </h4>
-
-          <h2>
-            Kontrol Playground
-          </h2>
-
-        </div>
-
-
-        <div class="instructions-grid">
-
-          <p>
-            <kbd>Arrow</kbd>
-            <kbd>W</kbd>
-            <kbd>S</kbd>
-            menggeser posisi cahaya pada sumbu X, Y, Z.
-          </p>
-
-          <p>
-            <kbd>F</kbd>
-            toggle Flat / Smooth shading,
-            <kbd>T</kbd>
-            toggle texture.
-          </p>
-
-          <p>
-            <kbd>L</kbd>
-            menjalankan orbit cahaya,
-            <kbd>P</kbd>
-            menjeda rotasi objek.
-          </p>
-
-          <p>
-            <kbd>[</kbd>
-            <kbd>]</kbd>
-            mengubah skala UV,
-            <kbd>-</kbd>
-            <kbd>+</kbd>
-            mengubah shininess.
-          </p>
-
-          <p>
-            <kbd>R</kbd>
-            mereset semua parameter ke kondisi awal (default).
-          </p>
-
-        </div>
-
-      </section>
-
+  <div class="app">
+
+    <!-- ============ LEFT: CANVAS + HUD ============ -->
+    <div class="left-panel">
+      <div class="header">
+        <h1>◈ TEXTURED & LIT OBJECT PLAYGROUND</h1>
+        <p>PRAKTIKUM 05 // LIGHTING · SHADING · TEXTURE</p>
+      </div>
+
+      <div class="canvas-wrapper">
+        <canvas id="glCanvas" width="800" height="600"></canvas>
+        <div class="status-badge" id="statusBadge">● RUNNING</div>
+      </div>
+
+      <div class="hud-bottom">
+        <div class="hud-item"><span class="hud-label">Shading</span><span class="hud-value" id="hudShading">SMOOTH</span></div>
+        <div class="hud-item"><span class="hud-label">Filtering</span><span class="hud-value" id="hudFiltering">LINEAR</span></div>
+        <div class="hud-item"><span class="hud-label">Light</span><span class="hud-value" id="hudLight">(2.00, 2.00, 2.00)</span></div>
+        <div class="hud-item"><span class="hud-label">Wrapping</span><span class="hud-value" id="hudWrapping">REPEAT</span></div>
+        <div class="hud-item"><span class="hud-label">Texture</span><span class="hud-value" id="hudTexture">CHECKER</span></div>
+        <div class="hud-item"><span class="hud-label">Camera</span><span class="hud-value" id="hudCamera">ORBIT OFF</span></div>
+      </div>
     </div>
 
-  </main>
+    <!-- ============ RIGHT: CONTROL PANEL ============ -->
+    <div class="right-panel">
+      <div class="panel-header">◢ PARAMETER CONTROL</div>
 
-  <script
-    type="module"
-    src="./main.js"
-  ></script>
+      <!-- Shape -->
+      <div class="control-group">
+        <label>Bentuk Objek</label>
+        <select id="shapeSelect">
+          <option value="cube">Kubus</option>
+          <option value="sphere">Bola</option>
+          <option value="torus">Torus</option>
+          <option value="torusKnot">Torus Knot</option>
+        </select>
+      </div>
 
+      <!-- Ambient Slider -->
+      <div class="control-group">
+        <label>Ambient Strength</label>
+        <div class="slider-row">
+          <input type="range" id="ambientSlider" min="0" max="1" step="0.01" value="0.18">
+          <span class="slider-val" id="ambientVal">0.18</span>
+        </div>
+      </div>
+
+      <!-- Shininess Slider -->
+      <div class="control-group">
+        <label>Shininess</label>
+        <div class="slider-row">
+          <input type="range" id="shininessSlider" min="2" max="128" step="1" value="32">
+          <span class="slider-val" id="shininessVal">32</span>
+        </div>
+      </div>
+
+      <!-- Light Position -->
+      <div class="control-group">
+        <label>LIGHT POSITION</label>
+        <div class="axis-row"><span>X</span><input type="range" id="lightX" min="-5" max="5" step="0.1" value="2"><span class="slider-val" id="lightXVal">2.0</span></div>
+        <div class="axis-row"><span>Y</span><input type="range" id="lightY" min="-5" max="5" step="0.1" value="2"><span class="slider-val" id="lightYVal">2.0</span></div>
+        <div class="axis-row"><span>Z</span><input type="range" id="lightZ" min="-5" max="5" step="0.1" value="2"><span class="slider-val" id="lightZVal">2.0</span></div>
+      </div>
+
+      <!-- Toggle Buttons -->
+      <div class="button-grid">
+        <button id="btnFlatSmooth" class="toggle-btn">Flat / Smooth (F)<span class="indicator"></span></button>
+        <button id="btnTexture"    class="toggle-btn">Texture (T)<span class="indicator"></span></button>
+        <button id="btnLightOrbit" class="toggle-btn">Light Orbit (L)<span class="indicator"></span></button>
+        <button id="btnCameraOrbit" class="toggle-btn">Camera Orbit<span class="indicator"></span></button>
+      </div>
+
+      <button class="btn-primary toggle-btn" id="btnStopRotation">
+        <span class="btn-label">Stop Rotation (P)</span>
+        <span class="indicator"></span>
+      </button>
+
+      <!-- CHALLENGE B: Ambient Control -->
+      <div class="control-group">
+        <label>Ambient Control (A / Z)</label>
+        <div class="button-grid">
+          <button id="btnAmbientDown">◀ Ambient − (A)</button>
+          <button id="btnAmbientUp">Ambient + (Z) ▶</button>
+        </div>
+      </div>
+
+      <!-- CHALLENGE C: Camera Control -->
+      <div class="control-group">
+        <label>Camera Control (Q / E)</label>
+        <div class="button-grid">
+          <button id="btnCamLeft">◀ Cam Left (Q)</button>
+          <button id="btnCamRight">Cam Right (E) ▶</button>
+        </div>
+      </div>
+
+      <!-- CHALLENGE D: Non-Uniform Scale -->
+      <div class="control-group">
+        <label>Non-Uniform Scale Mode</label>
+        <button id="btnNonUniform" class="toggle-btn">Non-Uniform Scale (N)<span class="indicator"></span></button>
+      </div>
+
+      <!-- Texture Source -->
+      <div class="control-group">
+        <label>Texture Source</label>
+        <select id="textureSelect">
+          <option value="checker">Checkerboard</option>
+          <option value="image">Image Texture</option>
+        </select>
+      </div>
+
+      <!-- Filtering -->
+      <div class="control-group">
+        <label>Filtering</label>
+        <select id="filterSelect">
+          <option value="LINEAR">LINEAR</option>
+          <option value="NEAREST">NEAREST</option>
+          <option value="LINEAR_MIPMAP">LINEAR_MIPMAP</option>
+        </select>
+      </div>
+
+      <!-- Wrapping -->
+      <div class="control-group">
+        <label>Wrapping</label>
+        <select id="wrapSelect">
+          <option value="REPEAT">REPEAT</option>
+          <option value="CLAMP_TO_EDGE">CLAMP_TO_EDGE</option>
+        </select>
+      </div>
+
+      <!-- Lighting Components -->
+      <div class="control-group">
+        <label>LIGHTING COMPONENTS</label>
+        <div class="checkbox-group">
+          <label><input type="checkbox" id="chkAmbient" checked> Ambient</label>
+          <label><input type="checkbox" id="chkDiffuse" checked> Diffuse</label>
+          <label><input type="checkbox" id="chkSpecular" checked> Specular</label>
+        </div>
+      </div>
+
+      <!-- Non-Uniform Scale Sliders -->
+      <div class="control-group">
+        <label>NON-UNIFORM SCALE</label>
+        <div class="axis-row"><span>X</span><input type="range" id="scaleX" min="0.2" max="2.0" step="0.1" value="1.0"><span class="slider-val" id="scaleXVal">1.0</span></div>
+        <div class="axis-row"><span>Y</span><input type="range" id="scaleY" min="0.2" max="2.0" step="0.1" value="1.0"><span class="slider-val" id="scaleYVal">1.0</span></div>
+        <div class="axis-row"><span>Z</span><input type="range" id="scaleZ" min="0.2" max="2.0" step="0.1" value="1.0"><span class="slider-val" id="scaleZVal">1.0</span></div>
+      </div>
+
+      <button class="btn-danger" id="btnReset">⟲ Reset Scene (R)</button>
+
+      <div class="keyboard-legend">
+        <strong>◢ KEYBOARD</strong>
+        <p>← → ↑ ↓ / W S &nbsp;→&nbsp; Light X Y Z</p>
+        <p><b>A / Z</b> &nbsp;→&nbsp; Ambient − / +</p>
+        <p><b>Q / E</b> &nbsp;→&nbsp; Camera geser X</p>
+        <p>F &nbsp;→&nbsp; Flat/Smooth &nbsp;·&nbsp; T &nbsp;→&nbsp; Texture</p>
+        <p>L &nbsp;→&nbsp; Light Orbit &nbsp;·&nbsp; P &nbsp;→&nbsp; Pause Rotasi</p>
+        <p><b>N</b> &nbsp;→&nbsp; Non-Uniform Scale</p>
+        <p>G &nbsp;→&nbsp; Wrapping &nbsp;·&nbsp; R &nbsp;→&nbsp; Reset</p>
+        <p>[ ] &nbsp;→&nbsp; UV Scale &nbsp;·&nbsp; − + &nbsp;→&nbsp; Shininess</p>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./main.js"></script>
 </body>
 </html>
