@@ -197,6 +197,7 @@ uniform float u_useAmbient;
 uniform float u_useDiffuse;
 uniform float u_useSpecular;
 uniform float u_flatShading;
+uniform float u_useTexture;
 uniform sampler2D u_texture;
 out vec4 outColor;
 void main() {
@@ -214,9 +215,11 @@ void main() {
   if (diff > 0.0) {
     spec = pow(max(dot(R, V), 0.0), u_shininess);
   }
-  vec3 texColor = texture(u_texture, v_texCoord).rgb;
-  vec3 ambient  = u_useAmbient  * u_ambientStrength * texColor;
-  vec3 diffuse  = u_useDiffuse  * diff * u_lightColor * texColor;
+  vec3 sampled = texture(u_texture, v_texCoord).rgb;
+  vec3 plain   = vec3(0.85, 0.85, 0.85);
+  vec3 tc      = mix(plain, sampled, u_useTexture);
+  vec3 ambient  = u_useAmbient  * u_ambientStrength * tc;
+  vec3 diffuse  = u_useDiffuse  * diff * u_lightColor * tc;
   vec3 specular = u_useSpecular * spec * u_lightColor;
   outColor = vec4(ambient + diffuse + specular, 1.0);
 }`;
@@ -269,15 +272,16 @@ const L = {
   useDiff:  gl.getUniformLocation(program, "u_useDiffuse"),
   useSpec:  gl.getUniformLocation(program, "u_useSpecular"),
   flat:     gl.getUniformLocation(program, "u_flatShading"),
+  useTex:   gl.getUniformLocation(program, "u_useTexture"),
 };
 
 // ============================================================
 // 6. BUFFERS
 // ============================================================
-let positionBuffer = gl.createBuffer();
-let normalBuffer   = gl.createBuffer();
-let uvBuffer       = gl.createBuffer();
-let currentGeometry = null;
+const positionBuffer = gl.createBuffer();
+const normalBuffer   = gl.createBuffer();
+const uvBuffer       = gl.createBuffer();
+let currentGeometry  = null;
 
 function updateGeometry(shapeName) {
   let geo;
@@ -395,6 +399,7 @@ const state = {
   useAmbient: true,
   useDiffuse: true,
   useSpecular: true,
+  useTexture: true,
   isRotating: true,
   isLightOrbit: false,
   isCameraOrbit: false,
@@ -455,17 +460,22 @@ function setToggle(btnId, isActive) {
   if (btn) btn.classList.toggle("active", isActive);
 }
 
+function txt(id, val) {
+  const el = $(id);
+  if (el) el.textContent = val;
+}
+
 // ============================================================
 // 11. UI BINDINGS — SLIDERS
 // ============================================================
 on("ambientSlider", "input", e => {
   state.ambient = parseFloat(e.target.value);
-  $("ambientVal").textContent = state.ambient.toFixed(2);
+  txt("ambientVal", state.ambient.toFixed(2));
 });
 
 on("shininessSlider", "input", e => {
   state.shininess = parseFloat(e.target.value);
-  $("shininessVal").textContent = state.shininess.toFixed(0);
+  txt("shininessVal", state.shininess.toFixed(0));
 });
 
 ["X","Y","Z"].forEach(axis => {
@@ -473,7 +483,7 @@ on("shininessSlider", "input", e => {
     const v = parseFloat(e.target.value);
     const i = axis === "X" ? 0 : axis === "Y" ? 1 : 2;
     state.lightPos[i] = v;
-    $("light" + axis + "Val").textContent = v.toFixed(1);
+    txt("light" + axis + "Val", v.toFixed(1));
   });
 });
 
@@ -481,7 +491,7 @@ on("shininessSlider", "input", e => {
   on("scale" + axis, "input", e => {
     const v = parseFloat(e.target.value);
     state["scale" + axis] = v;
-    $("scale" + axis + "Val").textContent = v.toFixed(1);
+    txt("scale" + axis + "Val", v.toFixed(1));
   });
 });
 
@@ -518,7 +528,8 @@ on("btnFlatSmooth", "click", () => {
 });
 
 on("btnTexture", "click", () => {
-  $("btnTexture").classList.toggle("active");
+  state.useTexture = !state.useTexture;
+  setToggle("btnTexture", state.useTexture);
 });
 
 on("btnLightOrbit", "click", () => {
@@ -543,18 +554,47 @@ function stepAmbient(delta) {
   state.ambient = Math.max(0, Math.min(1, state.ambient + delta));
   const slider = $("ambientSlider");
   if (slider) slider.value = state.ambient;
-  $("ambientVal").textContent = state.ambient.toFixed(2);
+  txt("ambientVal", state.ambient.toFixed(2));
 }
-on("btnAmbientDown", "click", () => stepAmbient(-0.05));
-on("btnAmbientUp",   "click", () => stepAmbient(+0.05));
 
 // ---- CHALLENGE C ----
 function stepCameraX(delta) {
   if (state.isCameraOrbit) return;
   camera.pos[0] = Math.max(-6, Math.min(6, camera.pos[0] + delta));
 }
-on("btnCamLeft",  "click", () => stepCameraX(-0.4));
-on("btnCamRight", "click", () => stepCameraX(+0.4));
+
+// ---- HOLD-TO-REPEAT HELPER ----
+function holdable(id, action, intervalMs = 50) {
+  const el = $(id);
+  if (!el) return;
+
+  let intervalId = null;
+  let timeoutId = null;
+
+  const start = (e) => {
+    e.preventDefault();
+    action();
+    timeoutId = setTimeout(() => {
+      intervalId = setInterval(action, intervalMs);
+    }, 300);
+  };
+
+  const stop = () => {
+    if (timeoutId) { clearTimeout(timeoutId); timeoutId = null; }
+    if (intervalId) { clearInterval(intervalId); intervalId = null; }
+  };
+
+  el.addEventListener("pointerdown", start);
+  el.addEventListener("pointerup", stop);
+  el.addEventListener("pointerleave", stop);
+  el.addEventListener("pointercancel", stop);
+  window.addEventListener("blur", stop);
+}
+
+holdable("btnAmbientDown", () => stepAmbient(-0.02), 40);
+holdable("btnAmbientUp",   () => stepAmbient(+0.02), 40);
+holdable("btnCamLeft",     () => stepCameraX(-0.05), 25);
+holdable("btnCamRight",    () => stepCameraX(+0.05), 25);
 
 // ---- CHALLENGE D ----
 function toggleNonUniformScale() {
@@ -608,8 +648,8 @@ window.addEventListener("keydown", e => {
     state.shading = state.shading === "FLAT" ? "SMOOTH" : "FLAT";
     setToggle("btnFlatSmooth", state.shading === "FLAT");
   } else if (k === "t") {
-    const b = $("btnTexture");
-    if (b) b.classList.toggle("active");
+    state.useTexture = !state.useTexture;
+    setToggle("btnTexture", state.useTexture);
   } else if (k === "g") {
     state.wrap = state.wrap === "REPEAT" ? "CLAMP_TO_EDGE" : "REPEAT";
     const s = $("wrapSelect"); if (s) s.value = state.wrap;
@@ -622,14 +662,6 @@ window.addEventListener("keydown", e => {
   } else if (k === "p") {
     state.isRotating = !state.isRotating;
     updateRotationButton();
-  } else if (k === "a") {
-    stepAmbient(-0.05);
-  } else if (k === "z") {
-    stepAmbient(+0.05);
-  } else if (k === "q") {
-    stepCameraX(-0.4);
-  } else if (k === "e") {
-    stepCameraX(+0.4);
   } else if (k === "n") {
     toggleNonUniformScale();
   }
@@ -648,6 +680,7 @@ function resetScene() {
   state.textureSource = "checker";
   state.scaleX = 1.0; state.scaleY = 1.0; state.scaleZ = 1.0;
   state.useAmbient = true; state.useDiffuse = true; state.useSpecular = true;
+  state.useTexture = true;
   state.isRotating = true;
   state.isLightOrbit = false;
   state.isCameraOrbit = false;
@@ -657,7 +690,6 @@ function resetScene() {
   camera.orbitAngle = 0;
 
   const set = (id, val) => { const el = $(id); if (el) el.value = val; };
-  const txt = (id, val) => { const el = $(id); if (el) el.textContent = val; };
 
   set("lightX", 2);  txt("lightXVal", "2.0");
   set("lightY", 2);  txt("lightYVal", "2.0");
@@ -680,8 +712,8 @@ function resetScene() {
   state.shape = "cube";
   updateGeometry("cube");
 
-  setToggle("btnFlatSmooth", true); // SMOOTH is default
-  setToggle("btnTexture", false);
+  setToggle("btnFlatSmooth", true);
+  setToggle("btnTexture", true);
   setToggle("btnLightOrbit", false);
   setToggle("btnCameraOrbit", false);
   setToggle("btnNonUniform", false);
@@ -698,6 +730,13 @@ function update(dt) {
     state.rotX += 20.0 * dt;
     state.rotY += 35.0 * dt;
   }
+
+  const ambKeySpeed = 0.5;
+  const camKeySpeed = 3.0;
+  if (keys["a"]) stepAmbient(-ambKeySpeed * dt);
+  if (keys["z"]) stepAmbient(+ambKeySpeed * dt);
+  if (keys["q"]) stepCameraX(-camKeySpeed * dt);
+  if (keys["e"]) stepCameraX(+camKeySpeed * dt);
 
   if (state.isLightOrbit) {
     const t = performance.now() * 0.001;
@@ -737,11 +776,6 @@ function syncLight(i) {
   const slider = $("light" + axis);
   if (slider) slider.value = state.lightPos[i];
   txt("light" + axis + "Val", state.lightPos[i].toFixed(1));
-}
-
-function txt(id, val) {
-  const el = $(id);
-  if (el) el.textContent = val;
 }
 
 // ============================================================
@@ -786,6 +820,7 @@ function draw() {
   gl.uniform1f(L.useDiff, state.useDiffuse ? 1.0 : 0.0);
   gl.uniform1f(L.useSpec, state.useSpecular ? 1.0 : 0.0);
   gl.uniform1f(L.flat, state.shading === "FLAT" ? 1.0 : 0.0);
+  gl.uniform1f(L.useTex, state.useTexture ? 1.0 : 0.0);
 
   gl.activeTexture(gl.TEXTURE0);
   gl.bindTexture(gl.TEXTURE_2D, getActiveTexture());
@@ -842,7 +877,7 @@ function render(time) {
 // ============================================================
 updateGeometry("cube");
 applyTextureSettings();
-setToggle("btnFlatSmooth", true); // default SMOOTH
+setToggle("btnFlatSmooth", true);
 updateRotationButton();
 requestAnimationFrame(render);
 

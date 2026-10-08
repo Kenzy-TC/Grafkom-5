@@ -689,13 +689,7 @@ select option {
     background 0.2s ease;
 }
 
-.btn:hover {
-  transform: translateY(-1px);
-
-  border-color: var(--border-bright);
-
-  background: #d4af3726;
-}
+button:active { transform: translateY(1px); }
 
 .btn kbd {
   padding: 1px 6px;
