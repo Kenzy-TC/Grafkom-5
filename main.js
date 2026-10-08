@@ -881,4 +881,3 @@ setToggle("btnFlatSmooth", true);
 updateRotationButton();
 requestAnimationFrame(render);
 
-console.log("✓ Aplikasi berjalan. Shape: cube, Shading: SMOOTH");
